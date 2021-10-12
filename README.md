@@ -24,7 +24,8 @@ A powerful yet simple windows 10 / 11 deployment automation tool as well!
 > _- system-wide, unblocks insider previews on windows update, or running setup.exe manually while online_  
 > _- when using created media on another pc for the first time, can launch `auto.cmd` from media once to enable_  
 
-_We did it! We broke gist.github.com_ ;) So this is the new home now. **Thank you all!**  
+**Instead of gist.github.com We moved to Github Repository So this is the new Home to Media Creation Tool Script**
+*Thank you all for supporting us*
 
 [discuss on MDL](https://forums.mydigitallife.net/forums/windows-10.54/)  
 
@@ -63,4 +64,4 @@ _We did it! We broke gist.github.com_ ;) So this is the new home now. **Thank yo
 2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearence
 ```
 
-_use `download ZIP` button or pastebin link to get the script, as saving the Raw file breaks line endings_  
+** _use `download ZIP` button or pastebin link to get the script, as saving the Raw file breaks line endings_ ** 
