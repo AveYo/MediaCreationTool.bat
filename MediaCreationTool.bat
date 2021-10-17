@@ -148,7 +148,7 @@ goto choice-%MCT%
 
 :choice-14
 set "VER=22000" & set "VID=11" & set "CB=22000.194.210913-1444.co_release_svc_refresh" & set "CT=2021/10/" & set "CC=2.0"
-set "CAB=%\\%download.microsoft.com/download/0/d/b/0db6dfde-48c9-4d70-904e-462b46d8a473/products_20211004.cab"
+set "CAB=%\\%download.windowsupdate.com/c/msdownload/update/software/secu/2021/10/windows10.0-kb5006674-x64_88158444ab7e13c95cab1177bdef13357d56ce2b.cab"
 set "EXE=%\\%software-download.microsoft.com/download/pr/888969d5-f34g-4e03-ac9d-1f9786c69161/MediaCreationToolW11.exe"
 goto process ::# windows 11 : usability and ui downgrade, and even more ChrEdge bloat - release
 
