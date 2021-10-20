@@ -25,7 +25,7 @@ A powerful yet simple windows 10 / 11 deployment automation tool as well!
 > _- system-wide, unblocks insider previews on windows update, or running setup.exe manually while online_  
 > _- when using created media on another pc for the first time, can launch `auto.cmd` from media once to enable_  
 
-_We did it! We broke gist.github.com_ ;) So this is the new home now. **Thank you all!**  
+_We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ ;) So this is the new home now. **Thank you all!**  
 
 [discuss on MDL](https://forums.mydigitallife.net/forums/windows-10.54/)  
 
@@ -65,4 +65,4 @@ _We did it! We broke gist.github.com_ ;) So this is the new home now. **Thank yo
 2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox
 ```
 
-_use `download ZIP` button or pastebin link to get the script, as saving the Raw file breaks line endings_  
+_saving the Raw file no longer breaks line endings; you don't need to right-click Run as Admin, script will ask itself when needed_  
