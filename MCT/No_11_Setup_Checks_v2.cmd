@@ -2,7 +2,7 @@
 #:: double-click to run or just copy-paste into powershell - it's a standalone hybrid script
 #:: v2 of the toggle script comes to the aid of outliers for whom v1 did not work due to various reasons (broken/blocked/slow wmi)
 #:: uses IFEO instead to attach to the same Virtual Disk Service Loader process running during setup, then launches a cmd erase 
-#:: of appraiserres.dll - but it must also do some ping-pong renaming of the exe in system32\11 - great implementation nonetheless 
+#:: of appraiserres.dll - but it must also do some ping-pong renaming of the exe in system32\11 - great implementation nonetheless
 #:: (for simplicity did not use powershell invoking CreateProcess and DebugActiveProcessStop to overcome IFEO constrains)
 #:: in v2 the cmd window will briefly flash while running diskmgmt - so it is not "better" per-se. just more compatible / reactive
 #:: you probably don't need to have it installed at all times - just when doing feature updates or manual setup within windows

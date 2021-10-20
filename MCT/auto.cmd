@@ -11,8 +11,8 @@ pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit/b)
 ::# elevate so that workarounds can be set
 fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  &exit/b)
 
-::# Skip TPM Check on Dynamic Update 11 snippet
-call :skip_tpm_check_on_dynamic_update
+::# No 11 Setup Checks on Dynamic Update
+call :no_11_setup_checks_on_dynamic_update
 
 ::# current version query
 set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
@@ -63,7 +63,7 @@ set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
  reg delete %NT% /v ProductName   /f /reg:64  & reg add %NT% /v EditionID /d "%~1" /f /reg:64
 ) >nul 2>nul &exit/b
 
-:skip_tpm_check_on_dynamic_update - also available as standalone toggle script in the MCT subfolder
+:no_11_setup_checks_on_dynamic_update - also available as standalone toggle script in the Downloads\MCT folder
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'skip\:tpm.*')[1];" &exit/b skip:tpm
   $S = gi -force 'setupprep.exe' -ea 0; if ($S.VersionInfo.FileBuildPart -lt 22000) {return} #:: abort if not 11 media
   $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"

@@ -16,9 +16,10 @@ A powerful yet simple windows 10 / 11 deployment automation tool as well!
 > _- pickup `$OEM$` folder (if it exists) with any post setup tweaks like `$OEM$\$$\Setup\Scripts\setupcomplete.cmd`_  
 > _- write `sources\PID.txt` file to preselect edition at media boot or setup within windows (if configured)_  
 > _- write `auto.cmd` file to re-run auto setup on demand, from media (includes Skip TPM if sources are 11)_  
-> _- write `winpeshl.ini` file in boot.wim to Skip TPM Check on media boot (if sources are 11)_  
+> _- patch `winsetup.dll` file in boot.wim to disable all setup checks on boot (if sources are 11)_  
 > **Select in MCT** with manual confirmation for everything in MCT GUI  
 > _- no 'oem' media customization, script passes products.xml configuration and quits without touching media_  
+> _- this will create a vanilla, default MCT iso/usb - for no 11 setup checks use the other choices_  
 
 > Skip TPM Check on Dynamic Update v1 _(wmi-based)_ or v2 _(ifeo-based)_ standalone toggle scripts in `MCT\` dir  
 > _- system-wide, unblocks insider previews on windows update, or running setup.exe manually while online_  
@@ -61,6 +62,7 @@ _We did it! We broke gist.github.com_ ;) So this is the new home now. **Thank yo
 2021.10.04: fix for long standing tr localization quirks; Skip TPM Check v2 (ifeo-based instead of wmi)
 2021.10.05: 11 22000.194 Release (rofl W11 MCT has limited capabilities, so still using 21H1 MCT because it works fine)
 2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearence
+2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox
 ```
 
 _use `download ZIP` button or pastebin link to get the script, as saving the Raw file breaks line endings_  

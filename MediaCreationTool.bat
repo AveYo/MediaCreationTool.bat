@@ -1,10 +1,10 @@
-@goto :start MediaCreationTool.bat - latest version at pastebin.com/bBw0Avc4 or git.io/MediaCreationTool.bat
+@goto :start MediaCreationTool.bat - latest at pastebin.com/bBw0Avc4 or github.com/AveYo/MediaCreationTool.bat
 :Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 21H2!
 ::Nothing but Microsoft-hosted source links and no third-party tools - script just configures a xml and starts MCT
 ::Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
-::Changelog: 2021.10.09
-:: outstanding refactoring around Windows 11 MCT; minimise while waiting MCT; unified 7 - 11 appearance                  
-:: improved script reliability; create iso directly; enhanced dialogs; args from script name or commandline 
+::Changelog: 2021.10.20
+:: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox
+:: refactored around Windows 11 MCT; minimise while waiting MCT; unified 7 - 11 appearance  
 :: 11: 22000.194 / 21H2: 19044.1165 / 21H1: 19043.928 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
 ::# uncomment to skip gui dialog for MCT choice: 1507 to 2109 / 11 - or rename script:  "21H2 MediaCreationTool.bat"
@@ -13,7 +13,7 @@ rem set MCT=2110
 ::# uncomment to start auto upgrade setup directly (no prompts) - or rename script:  "auto 11 MediaCreationTool.bat"
 rem set/a AUTO=1
 
-::# uncomment to start iso file creation directly (in C:\ESD) - or rename script:   "iso 20H2 MediaCreationTool.bat"
+::# uncomment to start iso file creation directly in \Downloads - or rename script: "iso 20H2 MediaCreationTool.bat"
 rem set/a ISO=1
 
 ::# uncomment and change autodetected MediaEdition - or rename script:   "enterprise iso 2009 MediaCreationTool.bat"
@@ -55,7 +55,7 @@ set dV=14
 
 ::# MCT Preset choice dialog items and default-index [Create USB]
 set PRESETS=Auto Setup,Create ISO,Create USB,Select in MCT
-set dP=3
+set dP=2
 
 :begin
 call :reg_query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber" OS_VERSION
@@ -128,12 +128,13 @@ for %%O in (%*) do for %%P in (1 2 3) do if %%~nO gtr 0 if %%~nO lss 15 if %%~xO
 if defined PRE if defined MCT goto choice-%MCT%
 
 ::# write auto media preset hint
-%<%:f0 " Detected Media "%>>% & %<%:2f " %VID% "%>>%
-%<%:8f " %MEDIA_LANGCODE% "%>>%  &  %<%:3f " %MEDIA_EDITION% "%>>%  &  %<%:5f " %MEDIA_ARCH% "%>>% & %<%:11 ~%>% & echo;
+%<%:f0 " Detected Media "%>>% & %<%:5f " %VID% "%>>%
+%<%:6f " %MEDIA_LANGCODE% "%>>%  &  %<%:9f " %MEDIA_EDITION% "%>>%  &  %<%:2f " %MEDIA_ARCH% "%>>%
+%<%:11 ~%>% & echo;
 
 %<%:13 "===================================================================================================="%>%
 %<%:1b "  Auto Setup   : MCT gets detected media - script adds any oem files and starts auto.cmd (setupprep)"%>%
-%<%:1b "  Create ISO   : MCT gets detected media and creates ISO in C:ESD folder - script adds any oem files"%>%
+%<%:1b "  Create ISO   : MCT gets detected media and creates ISO : Downloads dir - script adds any oem files"%>%
 %<%:1b " [Create USB]  : MCT gets detected media and prompts to create USB stick - script adds any oem files"%>%
 %<%:1b " Select in MCT : MCT asks confirmation for everything - script doesnt touch media, quits straightway"%>%
 %<%:13 "===================================================================================================="%>%
@@ -148,98 +149,98 @@ goto choice-%MCT%
 
 :choice-14
 set "VER=22000" & set "VID=11" & set "CB=22000.194.210913-1444.co_release_svc_refresh" & set "CT=2021/10/" & set "CC=2.0"
-set "CAB=%\\%download.microsoft.com/download/0/d/b/0db6dfde-48c9-4d70-904e-462b46d8a473/products_20211004.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/888969d5-f34g-4e03-ac9d-1f9786c69161/MediaCreationToolW11.exe"
+set "CAB=download.microsoft.com/download/0/d/b/0db6dfde-48c9-4d70-904e-462b46d8a473/products_20211004.cab"
+set "EXE=software-download.microsoft.com/download/pr/888969d5-f34g-4e03-ac9d-1f9786c69161/MediaCreationToolW11.exe"
 goto process ::# windows 11 : usability and ui downgrade, and even more ChrEdge bloat - release
 
 :choice-13
 set "VER=19044" & set "VID=21H2" & set "CB=19044.1165.210806-1742.21h2_release_svc_refresh" & set "CT=2021/09/" & set "CC=1.4.1"
-set "CAB=%\\%download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
-set "EXE=%\\%download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
+set "CAB=download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
+set "EXE=download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
 goto process ::# refreshed 19041 base with integrated 21H2 enablement package - pre-release
 
 :choice-12
 set "VER=19043" & set "VID=21H1" & set "CB=19043.928.210409-1212.21h1_release_svc_refresh" & set "CT=2021/04/" & set "CC=1.4.1"
-set "CAB=%\\%download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
-set "EXE=%\\%download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
+set "CAB=download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
+set "EXE=download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
 goto process ::# refreshed 19041 base with integrated 21H1 enablement package - current
 
 :choice-11
 set "VER=19042" & set "VID=20H2" & set "CB=19042.631.201119-0144.20h2_release_svc_refresh" & set "CT=2020/11/" & set "CC=1.4.1"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=19042.1052.210606-1844.20h2_release_svc_refresh" & set "CT=2021/07/"
-set "CAB=%\\%download.microsoft.com/download/4/3/0/430e9adb-cf08-4b68-9032-eafca8378d42/products_20201119.cab"
-set "EXE=%\\%download.microsoft.com/download/4/c/c/4cc6c15c-75a5-4d1b-a3fe-140a5e09c9ff/MediaCreationTool20H2.exe"
+set "CAB=download.microsoft.com/download/4/3/0/430e9adb-cf08-4b68-9032-eafca8378d42/products_20201119.cab"
+set "EXE=download.microsoft.com/download/4/c/c/4cc6c15c-75a5-4d1b-a3fe-140a5e09c9ff/MediaCreationTool20H2.exe"
 goto process ::# refreshed 19041 base with integrated 20H2 enablement package to mainly bundle ChrEdge
 
 :choice-10
 set "VER=19041" & set "VID=20H1" & set "CB=19041.508.200907-0256.vb_release_svc_refresh" & set "CT=2020/09/" & set "CC=1.4"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=19041.572.201009-1946.vb_release_svc_refresh" & set "CT=2020/11/"
-set "CAB=%\\%download.microsoft.com/download/7/4/4/744ccd60-3203-4eea-bfa2-4d04e18a1552/products.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/8d71966f-05fd-4d64-900b-f49135257fa5/MediaCreationTool2004.exe"
+set "CAB=download.microsoft.com/download/7/4/4/744ccd60-3203-4eea-bfa2-4d04e18a1552/products.cab"
+set "EXE=software-download.microsoft.com/download/pr/8d71966f-05fd-4d64-900b-f49135257fa5/MediaCreationTool2004.exe"
 goto process ::# visible improvements to windows update, defender, search, dx12, wsl, sandbox
 
 :choice-9
 set "VER=18363" & set "VID=19H2" & set "CB=18363.592.200109-2016.19h2_release_svc_refresh" & set "CT=2020/01/" & set "CC=1.3"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=18363.1139.201008-0514.19h2_release_svc_refresh" & set "CT=2020/11/"
-set "CAB=%\\%download.microsoft.com/download/8/2/b/82b12fa5-cab6-4d37-8167-16630c6151eb/products_20200116.cab"
-set "EXE=%\\%download.microsoft.com/download/c/0/b/c0b2b254-54f1-42de-bfe5-82effe499ee0/MediaCreationTool1909.exe"
+set "CAB=download.microsoft.com/download/8/2/b/82b12fa5-cab6-4d37-8167-16630c6151eb/products_20200116.cab"
+set "EXE=download.microsoft.com/download/c/0/b/c0b2b254-54f1-42de-bfe5-82effe499ee0/MediaCreationTool1909.exe"
 goto process ::# refreshed 18362 base with integrated 19H2 enablement package to activate usability and security fixes
 
 :choice-8
 set "VER=18362" & set "VID=19H1" & set "CB=18362.356.190909-1636.19h1_release_svc_refresh" & set "CT=2019/09/" & set "CC=1.3"
-set "CAB=%\\%download.microsoft.com/download/4/e/4/4e491657-24c8-4b7d-a8c2-b7e4d28670db/products_20190912.cab"
-set "EXE=%\\%download.microsoft.com/download/9/8/8/9886d5ac-8d7c-4570-a3af-e887ce89cf65/MediaCreationTool1903.exe"
+set "CAB=download.microsoft.com/download/4/e/4/4e491657-24c8-4b7d-a8c2-b7e4d28670db/products_20190912.cab"
+set "EXE=download.microsoft.com/download/9/8/8/9886d5ac-8d7c-4570-a3af-e887ce89cf65/MediaCreationTool1903.exe"
 goto process ::# modern windows 10 starts here with proper memory allocation, cpu scheduling, security features
 
 :choice-7
 set "VER=17763" & set "VID=1809" & set "CB=17763.379.190312-0539.rs5_release_svc_refresh" & set "CT=2019/03/" & set "CC=1.3"
-set "CAB=%\\%download.microsoft.com/download/8/E/8/8E852CBF-0BCC-454E-BDF5-60443569617C/products_20190314.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/MediaCreationTool1809.exe"
+set "CAB=download.microsoft.com/download/8/E/8/8E852CBF-0BCC-454E-BDF5-60443569617C/products_20190314.cab"
+set "EXE=software-download.microsoft.com/download/pr/MediaCreationTool1809.exe"
 goto process ::# rather mediocre considering it is the base for ltsc 2019; less smooth than 1803 in games; intel pre-4th-gen buggy
 
 :choice-6
 set "VER=17134" & set "VID=1803" & set "CB=17134.112.180619-1212.rs4_release_svc_refresh" & set "CT=2018/07/" & set "CC=1.2"
-set "CAB=%\\%download.microsoft.com/download/5/C/B/5CB83D2A-2D7E-4129-9AFE-353F8459AA8B/products_20180705.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/MediaCreationTool1803.exe"
+set "CAB=download.microsoft.com/download/5/C/B/5CB83D2A-2D7E-4129-9AFE-353F8459AA8B/products_20180705.cab"
+set "EXE=software-download.microsoft.com/download/pr/MediaCreationTool1803.exe"
 goto process ::# update available to finally fix most standby memory issues that were present since 1703; intel pre-4th-gen buggy
 
 :choice-5
 set "VER=16299" & set "VID=1709" & set "CB=16299.125.171213-1220.rs3_release_svc_refresh" & set "CT=2018/01/" & set "CC=1.1"
-set "CAB=%\\%download.microsoft.com/download/3/2/3/323D0F94-95D2-47DE-BB83-1D4AC3331190/products_20180105.cab"
-set "EXE=%\\%download.microsoft.com/download/A/B/E/ABEE70FE-7DE8-472A-8893-5F69947DE0B1/MediaCreationTool.exe"
+set "CAB=download.microsoft.com/download/3/2/3/323D0F94-95D2-47DE-BB83-1D4AC3331190/products_20180105.cab"
+set "EXE=download.microsoft.com/download/A/B/E/ABEE70FE-7DE8-472A-8893-5F69947DE0B1/MediaCreationTool.exe"
 goto process ::# plagued by standby and other memory allocation bugs, fullscreen optimisation issues, worst windows 10 ver by far
 
 :choice-4
 set "VER=15063" & set "VID=1703" & set "CB=15063.0.170317-1834.rs2_release" & set "CT=2017/03/" & set "CC=1.0"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=15063.0.170710-1358.rs2_release_svc_refresh" & set "CT=2017/07/"
-rem set "XML=%\\%download.microsoft.com/download/2/E/B/2EBE3F9E-46F6-4DB8-9C84-659F7CCEDED1/products20170727.xml"
+rem set "XML=download.microsoft.com/download/2/E/B/2EBE3F9E-46F6-4DB8-9C84-659F7CCEDED1/products20170727.xml"
 rem above refreshed xml often fails decrypting dual x86 + x64 - using rtm instead; the added enterprise + cloud are refreshed
-set "CAB=%\\%download.microsoft.com/download/9/5/4/954415FD-D9D7-4E1F-8161-41B3A4E03D5E/products_20170317.cab"
-set "EXE=%\\%download.microsoft.com/download/1/F/E/1FE453BE-89E0-4B6D-8FF8-35B8FA35EC3F/MediaCreationTool.exe"
+set "CAB=download.microsoft.com/download/9/5/4/954415FD-D9D7-4E1F-8161-41B3A4E03D5E/products_20170317.cab"
+set "EXE=download.microsoft.com/download/1/F/E/1FE453BE-89E0-4B6D-8FF8-35B8FA35EC3F/MediaCreationTool.exe"
 goto process ::# some gamers still find it the best despite unfixed memory allocation bugs and exposed cpu flaws; can select Cloud
 
 :choice-3
 set "VER=14393" & set "VID=1607" & set "CB=14393.0.161119-1705.rs1_refresh" & set "CT=2017/01/" & set "CC=1.0"
-set "CAB=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+set "CAB=wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
+set "EXE=download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
 goto process ::# snappy and stable for legacy hardware
 
 :choice-2
 set "VER=10586" & set "VID=1511" & set "CB=10586.0.160426-1409.th2_refresh" & set "CT=2016/05/" & set "CC=1.0"
-set "XML=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products05242016.xml"
-set "EXE=%\\%download.microsoft.com/download/1/C/4/1C41BC6B-F8AB-403B-B04E-C96ED6047488/MediaCreationTool.exe"
+set "XML=wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products05242016.xml"
+set "EXE=download.microsoft.com/download/1/C/4/1C41BC6B-F8AB-403B-B04E-C96ED6047488/MediaCreationTool.exe"
 rem 1511 MCT exe works and can select Education - using 1607 one instead anyway for unified products.xml catalog 1.0 format
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+set "EXE=download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
 goto process ::# most would rather go with 1507 or 1607 instead, with little effort can apply latest ltsb updates on all editions
 
 :choice-1
 set "VER=10240" & set "VID=1507" & set "CB=10240.16393.150909-1450.th1_refresh" & set "CT=2015/09/" & set "CC=1.0"
-set "XML=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products09232015_2.xml"
-set "EXE=%\\%download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationToolx64.exe"
-set "EXE32=%\\%download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationTool.exe"
+set "XML=wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products09232015_2.xml"
+set "EXE=download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationToolx64.exe"
+set "EXE32=download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationTool.exe"
 if /i "%PROCESSOR_ARCHITECTURE%" equ "x86" if not defined PROCESSOR_ARCHITEW6432 set "EXE=%EXE32%"
 rem 1507 MCT exe works but cant select Education - using 1607 one instead anyway for unified products.xml catalog 1.0 format
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+set "EXE=download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
 goto process ::# fastest for potato PCs
 
 :choice- ;( something happened (broken environment/powershell?) and should cancel, but continue with defaults instead
@@ -249,7 +250,7 @@ set MCT=%dv%& set PRE=%dP%& goto choice-%dV%
 %<%:0c " CANCELED "%>% & timeout /t 3 >nul & EXIT/B
 
 :start unified console appearance under 7 - 11  
-@echo off& title %~nx0& set set=& for %%O in (%*) do if /i %%O equ set set set=1 
+@echo off& title MCT& set __COMPAT_LAYER=Installer& chcp 437 >nul& set set=& for %%O in (%*) do if /i %%O equ set set set=1 
 if not defined set set/a BackClr=0x1 & set/a TextClr=0xf & set/a Columns=32 & set/a Lines=120 & set/a Buff=9999
 if not defined set set/a SColors=BackClr*16+TextClr & set/a WSize=Columns*256*256+Lines & set/a BSize=Buff*256*256+Lines
 if not defined set for %%O in ("HKCU\Console\MCT") do (
@@ -266,19 +267,21 @@ if not defined set for %%O in ("HKCU\Console\MCT") do (
  reg add %%O /v LineSelection  /d 0x0001 /t reg_dword /f & reg add %%O /v CtrlKeyShortcutsDisabled /d 0 /t reg_dword /f
  reg add %%O /v WindowSize    /d %WSize% /t reg_dword /f & reg add %%O /v ScreenBufferSize /d %BSize% /t reg_dword /f
  reg add %%O /v FontSize   /d 0x00100008 /t reg_dword /f & reg add %%O /v FaceName /d "Consolas" /t reg_sz /f ) >nul 2>nul 
-::# reload from simplified path (C:\ESD) 
-set "S=%SystemRoot%" & set "0=%SystemDrive%\ESD\%~nx0" & set "ESD=%SystemDrive%\ESD" & set "__COMPAT_LAYER=Installer"
+::# reload from Downloads folder 
+call :reg_query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" "{374DE290-123F-4565-9164-39C4925E467B}" D
+set "ROOT=%D%" & set "N=%~nx0" & set "SDRIVE=%SystemDrive%" & set "S=%SystemRoot%" & for %%O in ("%D%") do set "DDRIVE=%%~dO" 
 set "PATH=%S%\Sysnative;%S%\Sysnative\windowspowershell\v1.0\;%S%\System32;%S%\System32\windowspowershell\v1.0\;%PATH%"
-robocopy "%~dp0/" "%ESD%/" "%~nx0" >nul& pushd "%ESD%"& if not defined set start "MCT" cmd /d/x/rcall "%ESD%\%~nx0" %* set& exit
+robocopy "%~dp0/" "%ROOT%/" "%~nx0">nul & pushd "%ROOT%" & set "N=%N:(=%" & call set "N=%%N:)=%%" & call rename "%~nx0" "%%N%%"  
+if not defined set start "MCT" cmd /d/x/rcall "%ROOT%\%N%" %* set& exit
 ::# self-echo top 1-20 lines of script
 <"%~f0" (set/p \=&for /l %%O in (1,1,20) do set \=& set/p \=& call echo;%%\%%)
 ::# lean xp+ color macros by AveYo:  %<%:af " hello "%>>%  &  %<%:cf " w\"or\"ld "%>%   for single \ / " use .%|%\  .%|%/  \"%|%\"
 for /f "delims=:" %%\ in ('echo;prompt $h$s$h:^|cmd/d') do set "|=%%\" &set ">>=\..\c nul &set/p \=%%\%%\%%\%%\%%\%%\%%\<nul&popd"
 set "<=pushd "%public%"&2>nul findstr /c:\ /a" &set ">=%>>%&echo;" &set "|=%|:~0,1%" &set/p \=\<nul>"%public%\c"
 ::# (un)define main variables
-for %%O in (tps://) do set "\\=ht%%O" & rem ::# baffling pastebin url filters..
-for %%O in (OPTIONS NO_UPDATE NO_UNDO NO_OEM PRE AUTO CREATE ISO EDITION KEY ARCH LANGCODE VID MCT XML CAB EXE) do set "%%O="
-for %%O in (latest_MCT_script.url) do if not exist %%O (echo;[InternetShortcut]&echo;URL=git.io/MediaCreationTool.bat)>%%O
+for %%O in (":/") do set "htp=ht%= =%tp%%~O/" & set "hts=ht%= =%tps%%~O/" &  rem ::# baffling pastebin url filters..
+for %%O in (OPTIONS NO_UPDATE NO_UNDO NO_OEM PRE AUTO AKEY CREATE ISO EDITION KEY ARCH LANGCODE VID MCT XML CAB EXE) do set "%%O="
+for %%O in (latest_MCT.url) do if not exist %%O (echo;[InternetShortcut]&echo;URL=%hs%github.com/AveYo/MediaCreationTool.bat)>%%O
 goto Universal MCT
 ::--------------------------------------------------------------------------------------------------------------------------------
 
@@ -293,9 +296,10 @@ if %PRE%==4 (goto noelevate) else set set=%MCT%.%PRE%
 fltmc>nul || (set _=start "MCT" cmd /d/x/rcall "%~f0" %* %set%& powershell -nop -c start -verb runas cmd \"/d/x/r$env:_\"& exit)
 :noelevate 'Select in MCT' does not need it, script just quits straightway   
 
-::# cleanup ESD \ MCT workfolder
-mkdir "%ESD%\MCT" >nul 2>nul & pushd "%ESD%\MCT" & del /f /q products.* PID.txt *.ps1 *.cmd *.bat >nul 2>nul
-rmdir /s /q "%ESD%\Download" "%ESD%\Windows" >nul 2>nul & set/a latest=0 & if exist latest set/p latest=<latest
+::# cleanup Downloads\MCT workfolder
+mkdir "%ROOT%\MCT" >nul 2>nul & attrib -R -S -H %ROOT% /D & pushd "%ROOT%\MCT"
+del /f /q products.* PID.txt *.ps1 *.cmd *.bat >nul 2>nul 
+set/a latest=0 & if exist latest set/p latest=<latest
 echo,20211008>latest & if %latest% lss 20211008 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
 
 ::# edition fallback to ones that MCT supports - after selection
@@ -325,6 +329,10 @@ for %%O in (%MEDIA_EDITION%) do for %%K in (
 ) do if /i %%~xK equ .%%O set MEDIA_EDITION=%%~xK& call set MEDIA_EDITION=%%MEDIA_EDITION:.=%%& set "MEDIA_KEY=%%~nK"
 
 ::# detected / selected media preset
+set "CONSUMER=%MEDIA_EDITION:Enterprise=%"
+if "%CONSUMER%" equ "%MEDIA_EDITION%" (set CFG=Consumer) else (set CFG=Business)
+if not defined EDITION (set UNSTAGED=1& set STAGED=) else (set UNSTAGED=& set STAGED=%MEDIA_EDITION%)
+if defined STAGED (set MEDIA_CFG=%STAGED%) else (set MEDIA_CFG=%CFG%)  
 set MEDIA=& for %%O in (%LANGCODE%%EDITION%%ARCH%%KEY%) do (set MEDIA=%%O)
 if defined MEDIA for %%O in (%MEDIA_LANGCODE%) do (set LANGCODE=%%O)
 if defined MEDIA for %%O in (%MEDIA_EDITION%) do (set EDITION=%%O)
@@ -340,23 +348,26 @@ if %VER% geq 22000 (set XI=11& set VIS=21H2) else (set XI=10& set VIS=%VID%)
 cls & <"%~f0" (set/p \=&for /l %%O in (1,1,20) do set \=& set/p \=& call echo;%%\%%)
 
 ::# write target media label
-%<%:f0 " Windows %XI% Version "%>>%  &  %<%:2f " %VIS% "%>>%  &  %<%:f1 " %CB% "%>>%
-%<%:8f " %MEDIA_LANGCODE% "%>>%  &  %<%:3f " %MEDIA_EDITION% "%>>%  &  %<%:5f " %MEDIA_ARCH% "%>>%
+%<%:f0 " Windows %XI% Version "%>>% & %<%:5f " %VIS% "%>>%  &  %<%:f1 " %CB% "%>>%
+%<%:6f " %MEDIA_LANGCODE% "%>>%  &  %<%:9f " %MEDIA_CFG% "%>>%  &  %<%:2f " %MEDIA_ARCH% "%>>%
 %<%:11 ~%>% & echo;
 
-::# download MCT and CAB / XML
-set "DL=function dl($u,$f) {$w=new-object Net.WebClient; $w.Headers.Add('user-agent','iPad'); try {$w.DownloadFile($u,$f)}"
+::# download MCT and CAB / XML - now trying both secure and insecure
+set "DL=function dl($f,$h,$u) {$w=new-object Net.WebClient; $w.Headers.Add('user-agent','iPad'); try {$w.DownloadFile($h+$u,$f)}"
 set "DL=%DL% catch [Net.WebException] {write-host -non ';('; del $f -force -ea 0} finally {$w.Dispose()} } ; dl"
 set "/h=Check urls in browser | del MCT dir | use powershell v3.0+ | unblock powershell | enable BITS serv"
 if defined EXE echo;%EXE%
-if not exist MediaCreationTool%VID%.exe powershell -nop -c "%DL% $env:EXE MediaCreationTool${env:VID}.exe" 2>nul
+if not exist MediaCreationTool%VID%.exe powershell -nop -c "%DL% MediaCreationTool${env:VID}.exe $env:hts $env:EXE" 2>nul
+if not exist MediaCreationTool%VID%.exe powershell -nop -c "%DL% MediaCreationTool${env:VID}.exe $env:htp $env:EXE" 2>nul
 if not exist MediaCreationTool%VID%.exe %<%:1e " MediaCreationTool%VID%.exe download failed "%>%
 if defined XML echo;%XML%
-if defined XML if not exist products%VID%.xml powershell -nop -c "%DL% $env:XML products${env:VID}.xml" 2>nul
+if defined XML if not exist products%VID%.xml powershell -nop -c "%DL% products${env:VID}.xml $env:hts $env:XML" 2>nul
+if defined XML if not exist products%VID%.xml powershell -nop -c "%DL% products${env:VID}.xml $env:htp $env:XML" 2>nul
 if defined XML if not exist products%VID%.xml %<%:1e " products%VID%.xml download failed "%>%
 if defined XML if exist products%VID%.xml copy /y products%VID%.xml products.xml >nul 2>nul
 if defined CAB echo;%CAB%
-if defined CAB if not exist products%VID%.cab powershell -nop -c "%DL% $env:CAB products${env:VID}.cab" 2>nul
+if defined CAB if not exist products%VID%.cab powershell -nop -c "%DL% products${env:VID}.cab $env:hts $env:CAB" 2>nul
+if defined CAB if not exist products%VID%.cab powershell -nop -c "%DL% products${env:VID}.cab $env:htp $env:CAB" 2>nul
 if defined CAB if not exist products%VID%.cab %<%:1e " products%VID%.cab download failed "%>%
 if exist products%VID%.cab del /f /q products%VID%.xml 2>nul
 if exist products%VID%.cab expand.exe -R products%VID%.cab -F:* . >nul 2>nul
@@ -377,14 +388,17 @@ if "Select in MCT" equ "%PRESET%" (start MediaCreationTool%VID%.exe /Selfhost& E
 ::# red pill: OR run custom preset for auto upgrade without prompts / create iso directly / create usb
 ::# ====================================================================================================
 set "DIR=%SystemDrive%\$Windows.~WS\Sources\Windows"
+set "LABEL=%XI% %VIS% %MEDIA_CFG% %MEDIA_ARCH% %MEDIA_LANGCODE%"
 if not defined MEDIA (set LANGCODE=%MEDIA_LANGCODE%& set EDITION=%MEDIA_EDITION%& set ARCH=%MEDIA_ARCH%)
-if defined KEY set AUTO_KEY=/Pkey %KEY%
+if defined UNSTAGED (set KEY=) else if defined KEY set AKEY=/Pkey %KEY%
 
 ::# not using /MediaEdition option in MCT version 1703 and older - handled via CurrentVersion registry workaround
-if %VER% gtr 15063 set MEDIA=/MediaLangCode %LANGCODE% /MediaEdition %EDITION% /MediaArch %ARCH%
+if %VER% gtr 15063 (set MEDIA_SEL=/MediaLangCode %LANGCODE% /MediaEdition %EDITION% /MediaArch %ARCH%) else (set MEDIA_SEL=)
 if %VER% gtr 15063 if not defined NO_UPDATE set UPDATE=%UPDATE% /UpdateMedia Decline
-set MAKE_OPTIONS=/SelfHost /Action CreateMedia %MEDIA% %UPDATE% %UNDO% %OPTIONS% /Pkey Defer /SkipSummary /Eula Accept
-set AUTO_OPTIONS=/SelfHost /Auto Upgrade /MigChoice Upgrade %UPDATE% %UNDO% %OPTIONS% %AUTO_KEY% /SkipSummary /Eula Accept
+set MOPTIONS=/Action CreateMedia %MEDIA_SEL% %UPDATE% %UNDO% %OPTIONS% /Pkey Defer /SkipSummary /Eula Accept
+set AOPTIONS=/Auto Upgrade /MigChoice Upgrade %UPDATE% %UNDO% %OPTIONS% %AKEY% /SkipSummary /Eula Accept
+set MAKE_OPTIONS=/SelfHost& for %%s in (%MOPTIONS%) do call set MAKE_OPTIONS=%%MAKE_OPTIONS%% %%s 
+set AUTO_OPTIONS=/SelfHost& for %%s in (%AOPTIONS%) do call set AUTO_OPTIONS=%%AUTO_OPTIONS%% %%s
 
 ::# generate PID.txt to preset EDITION on boot media - MCT install.esd indexes only, ProWS/ProEdu only via auto.cmd
 for %%O in (Workstation WorkstationN Education EducationN) do if "Professional%%O" equ "%EDITION%" set "KEY="
@@ -392,7 +406,7 @@ if not defined PKEY if "Enterprise" equ "%EDITION%" set "KEY=" &rem explicitly r
 if not defined KEY (del /f /q PID.txt 2>nul) else (echo;[PID]& echo;Value=%KEY%& echo;;Edition=%EDITION%)>PID.txt
 
 ::# generate auxiliary script files
-for %%O in (auto Skip_TPM_Check_on_Media_Boot Skip_TPM_Check_on_Dynamic_Update_v1 Skip_TPM_Check_on_Dynamic_Update_v2) do (
+for %%O in (auto No_11_Setup_Checks_on_Boot No_11_Setup_Checks_v1 No_11_Setup_Checks_v2) do (
   powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_%%O_cmd')[1];"
 )
 
@@ -405,9 +419,10 @@ EXIT /BATCH DONE
 ::--------------------------------------------------------------------------------------------------------------------------------
 
 :process_custom_preset
- $host.ui.rawui.windowtitle = "MCT $env:PRESET"; $ErrorActionPreference = 0
+ $host.ui.rawui.windowtitle = "$env:PRESET"; $ErrorActionPreference = 0
  $DRIVE = [environment]::SystemDirectory[0]; $WIM = $DRIVE+':\$WINDOWS.~WS'; $DIR = $WIM+'\Sources\Windows'
- $ESD = $DRIVE+':\ESD'; $ISO = "${ESD}\${env:XI}_${env:VIS}.iso"; del $ISO -force -ea 0; cd -Lit("$ESD\MCT") 
+ $ESD = $DRIVE+':\ESD'; $ISO = "${env:ROOT}\${env:LABEL}.iso"; del $ISO -force -ea 0; cd -Lit("${env:ROOT}\MCT")
+ if ('Create ISO' -eq $env:PRESET) {write-host -fore Gray ISOfile $ISO} else {write-host -fore Gray Sources $DIR} 
 
 #:: workaround for version 1703 and earlier not having media selection switches
  $CV = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'
@@ -434,7 +449,7 @@ EXIT /BATCH DONE
 
 #:: OEM files
  function OEMFiles {
-   pushd -lit $ESD
+   pushd -lit "${env:ROOT}"
    foreach ($P in "$DIR\x86\sources","$DIR\x64\sources","$DIR\sources") {
      if (($null -ne $env:NO_OEM) -or !(test-path "$P\setupprep.exe")) {continue}
      if (test-path '$OEM$') {xcopy /CYBERHIQ '$OEM$' $($P+'\$OEM$')}
@@ -450,20 +465,27 @@ EXIT /BATCH DONE
    $an = 'UIAutomationClientsideProviders','UIAutomationClient','UIAutomationTypes','System.Windows.Forms','Microsoft.VisualBasic'
    $ca = { [Windows.Automation.ClientSettings]::RegisterClientSideProviderAssembly($re[0].GetName()) }
    $re = $an |% { [Reflection.Assembly]::LoadWithPartialName("'$_") } ; try { & $ca } catch { & $ca }
-
-  #:: launch MCT with /Selfhost /Action CreateMedia options
+   $cp = [Windows.Automation.AutomationElement]::ClassNameProperty
+   $bt = "Button","ComboBox","Edit" |% {new-object Windows.Automation.PropertyCondition($cp, $_)}
+   $ok = {[Microsoft.VisualBasic.Interaction]::AppActivate($set.MainWindowTitle); [Windows.Forms.SendKeys]::SendWait("{ENTER}")} 
+   $id = 0; if ('Create USB' -ne $env:PRESET) {$id = 1}
+   
+  #:: launch MCT with /Selfhost /Action CreateMedia options and wait for main window
    $mct = start -passthru "MediaCreationTool${env:VID}.exe" $env:MAKE_OPTIONS; if ($null -eq $mct) {return} 
-  #:: using automation to click gui buttons directly due to UpgradeNow and CreateUpgradeMedia actions no longer working in 11 MCT
-   if ('Create USB' -eq $env:PRESET) {$keys = "{ENTER}"; $id=0} else {$keys = "{DOWN}"*4 + "{ENTER}" + $ISO + "{ENTER}"; $id=1}
-   do { if ($mct.HasExited) {return} ; sleep -m 250 } while ($null -eq (get-process SetupHost -ea 0))
+   while ($null -eq (get-process SetupHost -ea 0)) {if ($mct.HasExited) {return} ; sleep -m 200 }
    $set = get-process SetupHost -ea 0; if ($null -eq $set) {return}
-   do { if ($mct.HasExited) {return} ; $set.Refresh(); sleep -m 250 } while ($set.MainWindowHandle -eq 0)
+   while ($set.MainWindowHandle -eq 0) { if ($mct.HasExited) {return} ; $set.Refresh(); sleep -m 200 }
+  #:: using automation to click gui buttons directly due to UpgradeNow and CreateUpgradeMedia actions no longer working in 11 MCT
    try {
-     $btn = new-object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ClassNameProperty, "Button")
-     $win = [Windows.Automation.AutomationElement]::FromHandle($set.MainWindowHandle); $nr = $win.FindAll(5, $btn).Count 
-     do { if ($mct.HasExited) {return} ; sleep -m 250 } while ($win.FindAll(5, $btn).Count -le $nr); $all = $win.FindAll(5, $btn)
-     $all[$id].GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern).Select(); $all[$all.Count-1].SetFocus() 
-     [Microsoft.VisualBasic.Interaction]::AppActivate($set.MainWindowTitle); [Windows.Forms.SendKeys]::SendWait($keys)
+     $win = [Windows.Automation.AutomationElement]::FromHandle($set.MainWindowHandle); $nr = $win.FindAll(5, $bt[0]).Count 
+     if ($env:VER -le 15063) { while ($win.FindAll(5, $bt[1]).Count -lt 3) {if ($mct.HasExited) {return}; sleep -m 200} ; & $ok }
+     while ($win.FindAll(5, $bt[0]).Count -le $nr) {if ($mct.HasExited) {return}; sleep -m 200} ; $all = $win.FindAll(5, $bt[0])
+     $all[$id].GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern).Select(); $all[$all.Count-1].SetFocus();& $ok
+     if ('Create USB' -ne $env:PRESET) {
+       while ($win.FindAll(5, $bt[2]).Count -le 0) {if ($mct.HasExited) {return}; sleep -m 50} ; $val = $win.FindAll(5, $bt[2])[0]
+       $val.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($ISO); $all = $win.FindAll(5, $bt[0])
+       ($all |? {$_.Current.AutomationId -eq 1}).GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).invoke()
+     }
    } catch {}
    sleep 7; powershell -win $env:hide -nop -c ";"
   
@@ -473,13 +495,6 @@ EXIT /BATCH DONE
   #:: watch setup files progress from the sideline (MCT has authoring control from start to finish, locking file handles)
    write-host -fore Yellow '-MCT is downloading ESD..'; $null= Watcher $mct $ESD "*.esd"; if ($mct.HasExited) {return}
    write-host -fore Yellow '-MCT is verifying files..'; $null= Watcher $mct $WIM "*.wim"; if ($mct.HasExited) {return}
-
-  #:: $ISO might actually be different due to sendkeys interference, so get it from setup state    
-   [xml]$xml = [IO.File]::ReadAllText("$WIM\Sources\Panther\windlp.state.xml",[Text.Encoding]::UTF8)
-   foreach ($t in $xml.WINDLP.TASK) { if ($t.Name -eq 'PreDownload') { foreach ($a in $t.ACTION) {
-     if ($a.ActionName -eq 'GetWebSetupUserInput') { if ($null -ne $a.TargetISO) {$ISO = $a.TargetISO} } } } 
-   }
-   write-host -fore Gray Targets $ISO
    
   #:: then add $OEM$, PID.txt, auto.cmd (disable with NO_OEM) ; undo workaround for < 1709 not having media selection switches
    OEMFiles; MCTCompatUndo
@@ -488,8 +503,8 @@ EXIT /BATCH DONE
    if ($env:XI -eq '11' -and $null -eq $env:NO_OEM) { 
      write-host -fore Yellow '-MCT is exporting boot.wim.. '; $null= Watcher $mct $WIM "ws.dat"; if ($mct.HasExited) {return} 
     
-    #:: suspend setuphost after boot.wim creation to apply Skip TPM Check on Media Boot
-     write-host -fore Yellow '-Applying Skip TPM Check on Media Boot.. '
+    #:: suspend setuphost after boot.wim creation to apply Skip All Checks on Boot
+     write-host -fore Yellow '-Applying No 11 Setup Checks on Boot.. '
      $M = [AppDomain]::CurrentDomain."DefineDynami`cAssembly"(1,1)."DefineDynami`cModule"(1)
      $D = $M."Defin`eType"("A",1179913,[ValueType]); $n = "DebugActiveProcess","DebugActiveProcessStop",[int],[int];
      0..1|% {$null= $D."DefinePInvok`eMethod"($n[$_],"kernel`32",8214,1,[int],$n[$_+2],1,4)}
@@ -497,9 +512,10 @@ EXIT /BATCH DONE
      $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcess $set.Id; sleep -m 300}
      $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcess $set.Id; sleep -m 600}
     
-    #:: mount boot.wim and generate registry overrides via winpeshl.ini file (cleaner than altering system hive directly)
+    #:: mount boot.wim and remove all setup checks from winsetup.dll
      if ($null -ne $set) {
-       write-host; start -wait -nonewwindow cmd '/d/x/rcall Skip_TPM_Check_on_Media_Boot.cmd %DIR%'; write-host
+       write-host; start -wait -nonewwindow cmd '/d/x/rcall No_11_Setup_Checks_on_Boot.cmd %DIR%'; write-host
+       $host.ui.rawui.windowtitle = "$env:PRESET"
      }
     
     #:: and finally, resume setuphost
@@ -508,7 +524,7 @@ EXIT /BATCH DONE
    }  
   
   #:: watch for sources files completion
-   write-host -fore Yellow '-MCT is exporting install.esd.. '; $null= Watcher $mct $(split-path $ISO) "*.iso" $false
+   write-host -fore Yellow '-MCT is exporting install.esd.. '; $null= Watcher $mct ${env:ROOT} "*.iso" $false
   #:: done monitoring 
    write-host -fore Yellow '-MCT is finishing media.. '; break
  }
@@ -516,25 +532,25 @@ EXIT /BATCH DONE
 #:: Auto Setup preset kills MCT process before the iso is done (we use sources folder directly), then starts auto.cmd
  if ('Auto Setup' -eq $env:PRESET) { 
    $mct.Kill(); $set = get-process SetupHost -ea 0; if ($set) {$set.Kill()} ; sleep 2; del $ISO -force -ea 0
-   cd -Lit("$ESD\MCT"); start -nonewwindow cmd '/d/x/rcall auto.cmd %DIR%' 
+   cd -Lit("${env:ROOT}\MCT"); start -nonewwindow cmd '/d/x/rcall auto.cmd %DIR%' 
  }
 
 #:process_custom_preset done!
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 :generate_auto_cmd $text = @"
-@title Auto Upgrade without prompts + change edition support & (set media=%1) & color 1f& echo off
+@title Auto Upgrade without prompts + change edition support & set args=%1& color 1f& echo off
 set OPTIONS=$env:AUTO_OPTIONS`r`n`r`n
 "@ + @'
-if defined media (pushd %media%) else pushd "%~dp0"
+if defined args (pushd %args%) else pushd "%~dp0"
 for %%i in ("x86\" "x64\" "") do if exist "%%~isources\setupprep.exe" set "dir=%%~i"
 pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit/b)
 
 ::# elevate so that workarounds can be set
 fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  &exit/b)
 
-::# Skip TPM Check on Dynamic Update for 11 - snippet
-call :skip_tpm_check_on_dynamic_update
+::# No 11 Setup Checks on Dynamic Update
+call :no_11_setup_checks_on_dynamic_update
 
 ::# current version query
 set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
@@ -585,7 +601,7 @@ set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
  reg delete %NT% /v ProductName   /f /reg:64  & reg add %NT% /v EditionID /d "%~1" /f /reg:64
 ) >nul 2>nul &exit/b
 
-:skip_tpm_check_on_dynamic_update - also available as standalone toggle script in the MCT subfolder
+:no_11_setup_checks_on_dynamic_update - also available as standalone toggle script in the Downloads\MCT folder
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'skip\:tpm.*')[1];" &exit/b skip:tpm
   $S = gi -force 'setupprep.exe' -ea 0; if ($S.VersionInfo.FileBuildPart -lt 22000) {return} #:: abort if not 11 media
   $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"
@@ -595,9 +611,9 @@ set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'skip
   $0 = sp HKLM:\SYSTEM\Setup\MoSetup 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
 #:: skip:tpm
 '@; [io.file]::WriteAllText('auto.cmd', $text) #:generate_auto_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
-:generate_Skip_TPM_Check_on_Dynamic_Update_v1_cmd $text = @'
+:generate_No_11_Setup_Checks_v1_cmd $text = @'
 @(set "0=%~f0"^)#) & powershell -nop -c iex([io.file]::ReadAllText($env:0)) & exit/b
 #:: double-click to run or just copy-paste into powershell - it's a standalone hybrid script
 #:: v1 of the toggle script works perfectly fine for most people with a non-botched windows installation
@@ -627,15 +643,15 @@ $_Paste_in_Powershell = {
 } ; start -verb runas powershell -args "-nop -c & {`n`n$($_Paste_in_Powershell-replace'"','\"')}"
 $_Press_Enter
 #::
-'@; [io.file]::WriteAllText('Skip_TPM_Check_on_Dynamic_Update_v1.cmd', $text) #:generate_Skip_TPM_Check_on_Dynamic_Update_v1_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
-
-:generate_Skip_TPM_Check_on_Dynamic_Update_v2_cmd $text = @'
+'@; [io.file]::WriteAllText('No_11_Setup_Checks_v1.cmd', $text) #:generate_No_11_Setup_Checks_v1_cmd
+::--------------------------------------------------------------------------------------------------------------------------------
+    
+:generate_No_11_Setup_Checks_v2_cmd $text = @'
 @(set "0=%~f0"^)#) & powershell -nop -c iex([io.file]::ReadAllText($env:0)) & exit/b
 #:: double-click to run or just copy-paste into powershell - it's a standalone hybrid script
 #:: v2 of the toggle script comes to the aid of outliers for whom v1 did not work due to various reasons (broken/blocked/slow wmi)
 #:: uses IFEO instead to attach to the same Virtual Disk Service Loader process running during setup, then launches a cmd erase 
-#:: of appraiserres.dll - but it must also do some ping-pong renaming of the exe in system32\11 - great implementation nonetheless 
+#:: of appraiserres.dll - but it must also do some ping-pong renaming of the exe in system32\11 - great implementation nonetheless
 #:: (for simplicity did not use powershell invoking CreateProcess and DebugActiveProcessStop to overcome IFEO constrains)
 #:: in v2 the cmd window will briefly flash while running diskmgmt - so it is not "better" per-se. just more compatible / reactive
 #:: you probably don't need to have it installed at all times - just when doing feature updates or manual setup within windows
@@ -656,33 +672,35 @@ $_Paste_in_Powershell = {
   timeout /t 5 } ; start -verb runas powershell -args "-nop -c & {`n`n$($_Paste_in_Powershell-replace'"','\"')}"
 $_Press_Enter
 #::
-'@; [io.file]::WriteAllText('Skip_TPM_Check_on_Dynamic_Update_v2.cmd', $text) #:generate_Skip_TPM_Check_on_Dynamic_Update_v2_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+'@; [io.file]::WriteAllText('No_11_Setup_Checks_v2.cmd', $text) #:generate_No_11_Setup_Checks_v2_cmd
+::--------------------------------------------------------------------------------------------------------------------------------
 
-:generate_Skip_TPM_Check_on_Media_Boot_cmd $text = @'
-@echo off & (set media=%1) & rem title Skip TPM Check on Media Boot 
-::#  run from the root of the USB drive or ISO files to add reg overrides in sources\boot.wim via winpeshl.ini
-
-pushd "%~dp0" & if defined media pushd %media% & if not exist sources\boot.wim popd
+:generate_No_11_Setup_Checks_on_Boot_cmd $text = @'
+@title No 11 Setup Checks on Boot & set args=%1& echo off
+::#  run from the root of the USB drive or extracted ISO files to remove all setup checks from winsetup.dll
+::#  can finally boot from new Windows 11 media inside VirtualBox
+ 
+pushd "%~dp0" & if defined args pushd %args% & if not exist sources\boot.wim popd
 if not exist sources\boot.wim echo; SOURCES\BOOT.WIM NOT FOUND! & timeout /t 5 & exit/b
 fltmc>nul || (set _="%~f0" %* & powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  & exit/b)
-dism /cleanup-wim & mkdir C:\ESD\AveYo>nul 2>nul & set ini=C:\ESD\AveYo\Windows\System32\winpeshl.ini & (set By=By)
-dism /mount-wim /wimfile:sources\boot.wim /index:2 /mountdir:C:\ESD\AveYo & (set DO=commit) & if exist %ini% (set DO=discard)
- >%ini% echo;[LaunchApps]
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passTPMCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passSecureBootCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passStorageCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passRAMCheck /d 1 /t reg_dword /f"
->>%ini% echo;%%SYSTEMDRIVE%%\setup.exe
-echo;&echo;Windows\System32\winpeshl.ini &echo;----------------------------- &type %ini% &echo;-----------------------------&echo;
-dism /unmount-wim /mountdir:C:\ESD\AveYo /%DO% & rmdir /s /q C:\ESD\AveYo & del /f /q sources\appraiserres.dll>nul
+dism /cleanup-wim & set BOOT=%SystemDrive%\ESD\BOOT& mkdir %SystemDrive%\ESD\BOOT >nul 2>nul
+dism /mount-wim /wimfile:sources\boot.wim /index:2 /mountdir:%BOOT% & (set DO=commit) & if exist %ini% (set DO=discard)
+pushd %BOOT%\sources & takeown /f winsetup.dll /a >nul & icacls winsetup.dll /grant administrators:f >nul
+copy /y winsetup.dll "%temp%\" >nul 2>nul
+set c1= $b = [System.IO.File]::ReadAllBytes('winsetup.dll'); $h = [System.BitConverter]::ToString($b)-replace'-'
+set c2= $s = [BitConverter]::ToString([Text.Encoding]::Unicode.GetBytes('Module_Init_HWRequirements'))-replace'-'
+set c3= $i = ($h.IndexOf($s)/2); $r = [Text.Encoding]::Unicode.GetBytes('Module_Init_GatherDiskInfo'); $l = $r.Length
+set c4= if ($i -gt 1) {for ($k=0;$k -lt $l;$k++) {$b[$i+$k] = $r[$k]} ; [System.IO.File]::WriteAllBytes('winsetup.dll',$b)}
+powershell -nop -c %c1%;%c2%;%c3%;%c4%; & popd & fc "%BOOT%\sources\winsetup.dll" "%TEMP%\winsetup.dll"
+dism /unmount-wim /mountdir:%BOOT% /commit & rmdir /s /q %BOOT% & del /f /q sources\appraiserres.dll>nul
+if not defined args choice /c EX1T
 ::
-'@; [io.file]::WriteAllText('Skip_TPM_Check_on_Media_Boot.cmd', $text) #:generate_Skip_TPM_Check_on_Media_Boot_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+'@; [io.file]::WriteAllText('No_11_Setup_Checks_on_Boot.cmd', $text) #:generate_No_11_Setup_Checks_on_Boot_cmd
+::--------------------------------------------------------------------------------------------------------------------------------
 
 :reg_query [USAGE] call :reg_query "HKCU\Volatile Environment" Value variable
 (for /f "tokens=2*" %%R in ('reg query "%~1" /v "%~2" /se "," 2^>nul') do set "%~3=%%S")& exit/b
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:DIR2ISO:#  [PARAMS] "directory" "file.iso" [optional]"label"
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:DIR2ISO\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
@@ -710,7 +728,7 @@ function :DIR2ISO ($dir, $iso, $vol='DVD_ROM') {if (!(test-path -Path $dir -path
 } #:DIR2ISO:#  export directory as (bootable) udf iso - lean and mean snippet by AveYo, 2021
 
 ::# no longer used atm, iso is created via mct 
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:CHOICE:#  [PARAMS] indexvar "c,h,o,i,c,e,s"  [OPTIONAL]  default-index "title" fontsize backcolor forecolor winsize
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICE\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
@@ -725,7 +743,7 @@ function :CHOICE ($index,$choices,$def=1,$title='Choices',[int]$sz=12,$bc='Midni
  $f.AcceptButton=$bt[$def-1]; $f.CancelButton=$bt[-1]; $f.Add_Shown({$f.Activate();$bt[$def-1].focus()})
  $null=$f.ShowDialog(); $index=$global:ret; if ($index -eq $ch.length) {return 0} else {return $index}
 } #:CHOICE:#  gui dialog with inverted focus returning selected index - lean and mean snippet by AveYo, 2018 - 2021
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:CHOICE.2x:#  [INTERNAL]
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICE.2x\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
@@ -736,14 +754,14 @@ function :CHOICE.2x {if (!(get-command :CHOICE -ea 0)) {iex($f0-split '#\:CHOICE
  $c2 = @($a[4], $a[5], $a[6], $a_7_,  $a[-4], $a[-3], $a[-2], $a[-1]); $r2= :CHOICE @c2; if ($r2 -ge 1) {return "$r1 $r2"}
  if ($r2 -lt 1) {$a[2]=$r1; :LOOP @a} }; :LOOP @args #:: index1 choices1 def1 title1  index2 choices2 def2 title2  font bc tc win
 } #:CHOICE.2x:#  MediaCreationTool.bat gui pseudo-menu via :CHOICE snippet, streamlined in a single powershell instance
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:PRODUCTS_XML:#  [INTERNAL]    refactored with less looping over Files; addressed more powershell 2.0 quirks
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:PRODUCTS_XML\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
 set ^ #=& set "0=%~f0"& set 1=;%0 %*& powershell -nop -c "%#%"& exit/bat/ps1
 function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",[Text.Encoding]::UTF8); $root = $null
  $eulas = 0; $langs = 0; $ver = $env:VER; $vid = $env:VID; $xi = $env:XI; if ($xi-eq'11') {$vid = "11 $env:VIS"}
- ${\\}='ht'+'tp://'; $url = "${\\}fg.ds.b1.download.windowsupdate.com/"
+ $url = $env:htp + "fg.ds.b1.download.windowsupdate.com/"
 #:: apply/insert Catalog version attribute for MCT compatibility
  if ($null -ne $xml.SelectSingleNode('/MCT')) {
    $xml.MCT.Catalogs.Catalog.version = $env:CC; $root = $xml.SelectSingleNode('/MCT/Catalogs/Catalog/PublishedMedia')
@@ -754,7 +772,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
  }
  foreach ($l in $root.ChildNodes) {if ($l.LocalName -eq 'EULAS') {$eulas = 1}; if ($l.LocalName -eq 'Languages') {$langs = 1} }
 #:: apply/insert EULA url fix to prevent MCT timing out while downloading it (likely TLS issue under naked Windows 7 host)
- $eula = 'ht'+'tps://' + "download.microsoft.com/download/C/0/3/C036B882-9F99-4BC9-A4B5-69370C4E17E9/EULA_MCTool_"
+ $eula = $env:hts + "download.microsoft.com/download/C/0/3/C036B882-9F99-4BC9-A4B5-69370C4E17E9/EULA_MCTool_"
  if ($eulas -eq 1) { foreach ($i in $root.EULAS.EULA) {$i.URL = $eula + $i.LanguageCode.ToUpperInvariant() + '_6.27.16.rtf'} }
  if ($eulas -eq 0) {
    $tmp = [xml]('<EULA><LanguageCode/><URL/></EULA>'); $el = $xml.CreateElement('EULAS'); $node = $xml.ImportNode($tmp.EULA,$true)
@@ -849,7 +867,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
  }
  $xml.Save("$pwd\products.xml");
 } #:PRODUCTS_XML:#  MediaCreationTool.bat configuring products.xml in one go
-::------------------------------------------------------------------------------------------------------------------------------::
+::--------------------------------------------------------------------------------------------------------------------------------
 
 ::# Insert business esd links in 1607,1703; Update 1909,2004,20H2,21H2,11 by hand until an updated products.xml from microsoft
 ::# Following are condensed ver,edition,lang,sizes,hashes,dirs to be recomposed into full official ESD links for MCT
