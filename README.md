@@ -25,7 +25,10 @@ A powerful yet simple windows 10 / 11 deployment automation tool as well!
 > _- system-wide, unblocks insider previews on windows update, or running setup.exe manually while online_  
 > _- when using created media on another pc for the first time, can launch `auto.cmd` from media once to enable_  
 
-_We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ ;) So this is the new home now. **Thank you all!**  
+_Saving the Raw file no longer breaks line endings_  
+_Don't need to right-click Run as Admin, script will ask itself when needed_  
+_We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ ;) So this is the new home now.  
+**Thank you all!**  
 
 [discuss on MDL](https://forums.mydigitallife.net/forums/windows-10.54/)  
 
@@ -62,7 +65,5 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2021.10.04: fix for long standing tr localization quirks; Skip TPM Check v2 (ifeo-based instead of wmi)
 2021.10.05: 11 22000.194 Release (rofl W11 MCT has limited capabilities, so still using 21H1 MCT because it works fine)
 2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearence
-2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox
+2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox; fixes #2
 ```
-
-_saving the Raw file no longer breaks line endings; you don't need to right-click Run as Admin, script will ask itself when needed_  

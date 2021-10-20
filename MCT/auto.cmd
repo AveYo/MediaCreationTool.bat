@@ -1,10 +1,10 @@
-@title Auto Upgrade without prompts + change edition support & (set media=%1) & color 1f& echo off
+@title Auto Upgrade without prompts + change edition support & (set args=%1) & color 1f& echo off
 
 set OPTIONS1=/SelfHost /Auto Upgrade /MigChoice Upgrade /DynamicUpdate Enable /UpdateMedia Decline
 set OPTIONS2=/Compat IgnoreWarning /MigrateDrivers All /ResizeRecoveryPartition Disable /ShowOOBE None 
 set OPTIONS3=/Telemetry Disable /CompactOS Disable /SkipSummary /Eula Accept
 
-if defined media (pushd %media%) else pushd "%~dp0"
+if defined args (pushd %args%) else pushd "%~dp0"
 for %%i in ("x86\" "x64\" "") do if exist "%%~isources\setupprep.exe" set "dir=%%~i"
 pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit/b)
 

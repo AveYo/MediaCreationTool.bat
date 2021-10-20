@@ -3,7 +3,7 @@
 ::Nothing but Microsoft-hosted source links and no third-party tools - script just configures a xml and starts MCT
 ::Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
 ::Changelog: 2021.10.20
-:: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox
+:: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox; fixes #2
 :: refactored around Windows 11 MCT; minimise while waiting MCT; unified 7 - 11 appearance  
 :: 11: 22000.194 / 21H2: 19044.1165 / 21H1: 19043.928 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
@@ -354,7 +354,7 @@ cls & <"%~f0" (set/p \=&for /l %%O in (1,1,20) do set \=& set/p \=& call echo;%%
 
 ::# download MCT and CAB / XML - now trying both secure and insecure
 set "DL=function dl($f,$h,$u) {$w=new-object Net.WebClient; $w.Headers.Add('user-agent','iPad'); try {$w.DownloadFile($h+$u,$f)}"
-set "DL=%DL% catch [Net.WebException] {write-host -non ';('; del $f -force -ea 0} finally {$w.Dispose()} } ; dl"
+set "DL=%DL% catch [Net.WebException] {write-host ';('; del $f -force -ea 0} finally {$w.Dispose()} } ; dl"
 set "/h=Check urls in browser | del MCT dir | use powershell v3.0+ | unblock powershell | enable BITS serv"
 if defined EXE echo;%EXE%
 if not exist MediaCreationTool%VID%.exe powershell -nop -c "%DL% MediaCreationTool${env:VID}.exe $env:hts $env:EXE" 2>nul
@@ -395,7 +395,7 @@ if defined UNSTAGED (set KEY=) else if defined KEY set AKEY=/Pkey %KEY%
 ::# not using /MediaEdition option in MCT version 1703 and older - handled via CurrentVersion registry workaround
 if %VER% gtr 15063 (set MEDIA_SEL=/MediaLangCode %LANGCODE% /MediaEdition %EDITION% /MediaArch %ARCH%) else (set MEDIA_SEL=)
 if %VER% gtr 15063 if not defined NO_UPDATE set UPDATE=%UPDATE% /UpdateMedia Decline
-set MOPTIONS=/Action CreateMedia %MEDIA_SEL% %UPDATE% %UNDO% %OPTIONS% /Pkey Defer /SkipSummary /Eula Accept
+set MOPTIONS=/Action CreateMedia %MEDIA_SEL% /UpdateMedia Decline %UNDO% %OPTIONS% /Pkey Defer /SkipSummary /Eula Accept
 set AOPTIONS=/Auto Upgrade /MigChoice Upgrade %UPDATE% %UNDO% %OPTIONS% %AKEY% /SkipSummary /Eula Accept
 set MAKE_OPTIONS=/SelfHost& for %%s in (%MOPTIONS%) do call set MAKE_OPTIONS=%%MAKE_OPTIONS%% %%s 
 set AUTO_OPTIONS=/SelfHost& for %%s in (%AOPTIONS%) do call set AUTO_OPTIONS=%%AUTO_OPTIONS%% %%s
@@ -422,7 +422,6 @@ EXIT /BATCH DONE
  $host.ui.rawui.windowtitle = "$env:PRESET"; $ErrorActionPreference = 0
  $DRIVE = [environment]::SystemDirectory[0]; $WIM = $DRIVE+':\$WINDOWS.~WS'; $DIR = $WIM+'\Sources\Windows'
  $ESD = $DRIVE+':\ESD'; $ISO = "${env:ROOT}\${env:LABEL}.iso"; del $ISO -force -ea 0; cd -Lit("${env:ROOT}\MCT")
- if ('Create ISO' -eq $env:PRESET) {write-host -fore Gray ISOfile $ISO} else {write-host -fore Gray Sources $DIR} 
 
 #:: workaround for version 1703 and earlier not having media selection switches
  $CV = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'
@@ -459,6 +458,14 @@ EXIT /BATCH DONE
    popd
  }
 
+#: remove no setup checks on dynamic update
+ $N = 'Skip TPM Check on Dynamic Update'
+ $B = gwmi -Class __FilterToConsumerBinding -Namespace 'root\subscription' -Filter "Filter = ""__eventfilter.name='$N'""" -ea 0
+ $C = gwmi -Class CommandLineEventConsumer -Namespace 'root\subscription' -Filter "Name='$N'" -ea 0
+ $F = gwmi -Class __EventFilter -NameSpace 'root\subscription' -Filter "Name='$N'" -ea 0
+ if ($B) { $B | rwmi; $off = $true } ; if ($C) { $C | rwmi; $off = $true } ; if ($F) { $F | rwmi; $off = $true }
+ $0 = ri 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\vdsldr.exe' -force -ea 0
+
 #:: MCT custom preset processing
  while ($true) {
   #:: preload automation library
@@ -484,7 +491,8 @@ EXIT /BATCH DONE
      if ('Create USB' -ne $env:PRESET) {
        while ($win.FindAll(5, $bt[2]).Count -le 0) {if ($mct.HasExited) {return}; sleep -m 50} ; $val = $win.FindAll(5, $bt[2])[0]
        $val.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($ISO); $all = $win.FindAll(5, $bt[0])
-       ($all |? {$_.Current.AutomationId -eq 1}).GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).invoke()
+       #($all |? {$_.Current.AutomationId -eq 1}).GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).invoke()
+       ($all |? {$_.Current.AutomationId -eq 1}).SetFocus(); & $ok
      }
    } catch {}
    sleep 7; powershell -win $env:hide -nop -c ";"
@@ -494,24 +502,34 @@ EXIT /BATCH DONE
   
   #:: watch setup files progress from the sideline (MCT has authoring control from start to finish, locking file handles)
    write-host -fore Yellow '-MCT is downloading ESD..'; $null= Watcher $mct $ESD "*.esd"; if ($mct.HasExited) {return}
+
+  #:: $ISO might actually be different if automation fails, so get it from setup state    
+   [xml]$xml = [IO.File]::ReadAllText("$WIM\Sources\Panther\windlp.state.xml",[Text.Encoding]::UTF8)
+   foreach ($t in $xml.WINDLP.TASK) { if ($t.Name -eq 'PreDownload') { foreach ($a in $t.ACTION) {
+     if ($a.ActionName -eq 'GetWebSetupUserInput') { if ($null -ne $a.TargetISO) {$ISO = $a.TargetISO} } } } 
+   }
+   if ('Create ISO' -eq $env:PRESET) {write-host -fore Gray ISOfile $ISO} else {write-host -fore Gray Sources $DIR} 
+
+  #:: watch setup files progress from the sideline (MCT has authoring control from start to finish, locking file handles)
    write-host -fore Yellow '-MCT is verifying files..'; $null= Watcher $mct $WIM "*.wim"; if ($mct.HasExited) {return}
    
   #:: then add $OEM$, PID.txt, auto.cmd (disable with NO_OEM) ; undo workaround for < 1709 not having media selection switches
    OEMFiles; MCTCompatUndo
 
   #:: if Windows 11 sources, apply skip tpm check to boot.wim
-   if ($env:XI -eq '11' -and $null -eq $env:NO_OEM) { 
+   if ('Auto Setup' -ne $env:PRESET -and $env:XI -eq '11' -and $null -eq $env:NO_OEM) { 
      write-host -fore Yellow '-MCT is exporting boot.wim.. '; $null= Watcher $mct $WIM "ws.dat"; if ($mct.HasExited) {return} 
     
     #:: suspend setuphost after boot.wim creation to apply Skip All Checks on Boot
      write-host -fore Yellow '-Applying No 11 Setup Checks on Boot.. '
+     [Microsoft.VisualBasic.Interaction]::AppActivate("$env:PRESET")
      $M = [AppDomain]::CurrentDomain."DefineDynami`cAssembly"(1,1)."DefineDynami`cModule"(1)
      $D = $M."Defin`eType"("A",1179913,[ValueType]); $n = "DebugActiveProcess","DebugActiveProcessStop",[int],[int];
      0..1|% {$null= $D."DefinePInvok`eMethod"($n[$_],"kernel`32",8214,1,[int],$n[$_+2],1,4)}
      $T = $D."Creat`eType"(); function DP {$T."G`etMethod"($args[0]).invoke(0,$args[1])}
-     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcess $set.Id; sleep -m 300}
      $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcess $set.Id; sleep -m 600}
-    
+     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcess $set.Id; sleep -m 1200}
+     
     #:: mount boot.wim and remove all setup checks from winsetup.dll
      if ($null -ne $set) {
        write-host; start -wait -nonewwindow cmd '/d/x/rcall No_11_Setup_Checks_on_Boot.cmd %DIR%'; write-host
@@ -519,12 +537,12 @@ EXIT /BATCH DONE
      }
     
     #:: and finally, resume setuphost
-     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcessStop $set.Id; sleep -m 300}
-     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcessStop $set.Id; sleep -m 300}
+     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcessStop $set.Id; sleep -m 600}
+     $set = get-process "SetupHost" -ea 0; if ($null -ne $set) {$null= DP DebugActiveProcessStop $set.Id; sleep -m 1200}
    }  
   
   #:: watch for sources files completion
-   write-host -fore Yellow '-MCT is exporting install.esd.. '; $null= Watcher $mct ${env:ROOT} "*.iso" $false
+   write-host -fore Yellow '-MCT is exporting install.esd.. '; $null= Watcher $mct $(split-path $ISO) "*.iso" $false
   #:: done monitoring 
    write-host -fore Yellow '-MCT is finishing media.. '; break
  }
@@ -686,13 +704,13 @@ fltmc>nul || (set _="%~f0" %* & powershell -nop -c start -verb runas cmd \"/d/x/
 dism /cleanup-wim & set BOOT=%SystemDrive%\ESD\BOOT& mkdir %SystemDrive%\ESD\BOOT >nul 2>nul
 dism /mount-wim /wimfile:sources\boot.wim /index:2 /mountdir:%BOOT% & (set DO=commit) & if exist %ini% (set DO=discard)
 pushd %BOOT%\sources & takeown /f winsetup.dll /a >nul & icacls winsetup.dll /grant administrators:f >nul
-copy /y winsetup.dll "%temp%\" >nul 2>nul
 set c1= $b = [System.IO.File]::ReadAllBytes('winsetup.dll'); $h = [System.BitConverter]::ToString($b)-replace'-'
 set c2= $s = [BitConverter]::ToString([Text.Encoding]::Unicode.GetBytes('Module_Init_HWRequirements'))-replace'-'
 set c3= $i = ($h.IndexOf($s)/2); $r = [Text.Encoding]::Unicode.GetBytes('Module_Init_GatherDiskInfo'); $l = $r.Length
 set c4= if ($i -gt 1) {for ($k=0;$k -lt $l;$k++) {$b[$i+$k] = $r[$k]} ; [System.IO.File]::WriteAllBytes('winsetup.dll',$b)}
-powershell -nop -c %c1%;%c2%;%c3%;%c4%; & popd & fc "%BOOT%\sources\winsetup.dll" "%TEMP%\winsetup.dll"
-dism /unmount-wim /mountdir:%BOOT% /commit & rmdir /s /q %BOOT% & del /f /q sources\appraiserres.dll>nul
+if not exist winsetup.dll (set c1=&set c2=&set c3=&set c4=) else copy /y winsetup.dll "%temp%\" >nul 2>nul
+powershell -nop -c %c1%;%c2%;%c3%;%c4%; & popd & if defined c1 fc "%BOOT%\sources\winsetup.dll" "%TEMP%\winsetup.dll"
+dism /unmount-wim /mountdir:%BOOT% /commit & rmdir /s /q %BOOT% >nul 2>nul & del /f /q sources\appraiserres.dll>nul
 if not defined args choice /c EX1T
 ::
 '@; [io.file]::WriteAllText('No_11_Setup_Checks_on_Boot.cmd', $text) #:generate_No_11_Setup_Checks_on_Boot_cmd
