@@ -581,7 +581,7 @@ EXIT /BATCH DONE
    write-host -fore Yellow "Disable boot.wim 11 setup checks"
    rmdir "$WD\MOUNT" -re -force -ea 0; mkdir "$WD\MOUNT" -force -ea 0 >''; $winsetup = "$WD\MOUNT\sources\winsetup.dll"
    dism.exe /mount-wim /wimfile:"$DIR\sources\boot.wim" /index:2 /mountdir:"$WD\MOUNT"; write-host 
-   takeown.exe /f $winsetup /a >''; icacls.exe $winsetup /grant administrators:f; attrib -R -S -H $winsetup; $patch = '/commit'
+   takeown.exe /f $winsetup /a >''; icacls.exe $winsetup /grant *S-1-5-32-544:f; attrib -R -S -H $winsetup; $patch = '/commit'
    try {[io.file]::OpenWrite($winsetup).close()} catch {$patch = '/discard'}
    if ($patch -eq '/commit') { #:: an original setup override by AveYo to use when registry overrides fail (VirtualBox 5.x)
      $b = [io.file]::ReadAllBytes($winsetup); $h = [BitConverter]::ToString($b)-replace'-' 
