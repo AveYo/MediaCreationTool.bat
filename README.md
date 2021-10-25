@@ -6,22 +6,31 @@ A powerful yet simple windows 10 / 11 deployment automation tool as well!
 > recommended windows setup options with the least amount of issues on upgrades set via auto.cmd  
 > awesome dialogs with keyboard focus to pick target version and preset action  
 
-> **Auto Setup** with detected media without confirmation  
+>1 **Auto Upgrade** with detected media, script assists setupprep for upgrading directly  
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
-> **Create ISO** with detected media in `C:\ESD` folder without confirmation  
-> _- can override detected media by adding edition name / language / arch to script name_  
-> **Create USB** with detected media after confirmation  
-> _- can click Back and select ISO instead to save in a different path_  
-> custom presets above support 'oem' media customization, that can be disabled by adding `no_oem` to script name  
-> _- pickup `$OEM$` folder (if it exists) with any post setup tweaks like `$OEM$\$$\Setup\Scripts\setupcomplete.cmd`_  
-> _- write `sources\PID.txt` file to preselect edition at media boot or setup within windows (if configured)_  
-> _- write `auto.cmd` file to re-run auto setup on demand, from media (includes Skip TPM if sources are 11)_  
-> _- patch `winsetup.dll` file in boot.wim to disable all setup checks on boot (if sources are 11)_  
-> **Select in MCT** with manual confirmation for everything in MCT GUI  
-> _- no 'oem' media customization, script passes products.xml configuration and quits without touching media_  
-> _- this will create a vanilla, default MCT iso/usb - for no 11 setup checks use the other choices_  
 
-> Skip TPM Check on Dynamic Update v1 _(wmi-based)_ or v2 _(ifeo-based)_ standalone toggle scripts in `MCT\` dir  
+>2 **Make ISO** with detected media in `Downloads` folder directly  
+> _- can override detected media by adding edition name / language / arch to script name_  
+
+>3 **Make USB** with detected media in specified usb target    
+> _- can click Back and select ISO instead to save in a different path_  
+
+>4 **Select** with picked Edition, Language, Arch - on specified target  
+> _- implicit choice, will include setup override files_  
+
+>5 **MCT Defaults** with GUI selected media, makes vanilla, default MCT iso/usb  
+> _- no added file, script passes products.xml and quits without touching media_  
+
+>1-4 presets will add any setup override files to created media  
+> _- can be disabled by adding `def` to script name_  
+> _- write `$OEM$` folder (if it exists) with post setup tweaks like `$OEM$\$$\Setup\Scripts\setupcomplete.cmd`_  
+> _- write `sources\PID.txt` to preselect edition at media boot or setup within windows (if configured)_  
+> _- write `auto.cmd` to re-run upgrade from media on demand (includes Skip TPM Check on Dynamic Update)_  
+> _- write `AutoUnattend.xml` to override 11 setup checks on media boot (and enable local account on Home)_  
+> _- patch `winsetup.dll` in boot.wim for booting 11 in VirtualBox 5.x (with optional FIX arg)_    
+
+
+> Skip TPM Check on Dynamic Update v3 _(ifeo-based, no cmd window)_ standalone toggle script in `MCT` dir  
 > _- system-wide, unblocks insider previews on windows update, or running setup.exe manually while online_  
 > _- when using created media on another pc for the first time, can launch `auto.cmd` from media once to enable_  
 
@@ -66,4 +75,7 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2021.10.05: 11 22000.194 Release (rofl W11 MCT has limited capabilities, so still using 21H1 MCT because it works fine)
 2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearence
 2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox; fixes #2
+2021.10.23: 11 22000.258
+            more intuitive presets; 11 setup override via AutoUnattend.xml or via boot.wim (for VirtualBox 5.x) with FIX arg
+            only reliable ui automation; enhanced script output
 ```

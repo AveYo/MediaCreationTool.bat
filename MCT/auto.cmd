@@ -9,7 +9,7 @@ for %%i in ("x86\" "x64\" "") do if exist "%%~isources\setupprep.exe" set "dir=%
 pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit/b)
 
 ::# elevate so that workarounds can be set
-fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  &exit/b)
+fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"& exit/b)
 
 ::# No 11 Setup Checks on Dynamic Update
 call :no_11_setup_checks_on_dynamic_update
@@ -47,6 +47,7 @@ if /i "CoreCountrySpecific" == "%EditionID%" if %vol% == 1 (call :rename Profess
 if /i "CoreSingleLanguage"  == "%EditionID%" if %vol% == 1 (call :rename Professional)
 if /i "Core"                == "%EditionID%" if %vol% == 1 (call :rename Professional)
 if /i "CoreN"               == "%EditionID%" if %vol% == 1 (call :rename ProfessionalN)
+if /i "Ultimate"            == "%EditionID%" (call :rename Professional)
 if /i ""                    == "%EditionID%" (call :rename Professional)
 
 :setup
@@ -63,12 +64,15 @@ set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
  reg delete %NT% /v ProductName   /f /reg:64  & reg add %NT% /v EditionID /d "%~1" /f /reg:64
 ) >nul 2>nul &exit/b
 
-:no_11_setup_checks_on_dynamic_update - also available as standalone toggle script in the Downloads\MCT folder
-set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'skip\:tpm.*')[1];" &exit/b skip:tpm
-  $S = gi -force 'setupprep.exe' -ea 0; if ($S.VersionInfo.FileBuildPart -lt 22000) {return} #:: abort if not 11 media
-  $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"
-  $C+= '&md 11&cd 11&ren vd.exe vdsldr.exe&robocopy "../" "./" "vdsldr.exe"&ren vdsldr.exe vd.exe&start vd -Embedding)&rem;'
+:no_11_setup_checks_on_dynamic_update - also available as standalone toggle script in the MCT folder
+set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'#[:]skip[:]tpm.*')[1];" &exit/b #:skip:tpm
+  $3 = @(); $I = gi -force 'setupprep.exe' -ea 0; if ($I.VersionInfo.FileBuildPart -lt 22000) {return} #:: abort if not 11 media
+  $3+= '''  Skip TPM Check on Dynamic Update (c) AveYo 2021 : v3 IFEO-based with no flashing cmd window' 
+  $3+= 'C = "cmd /q AveYo /d/x/r erase /f/s/q %systemdrive%\$windows.~bt\appraiserres.dll&"'
+  $3+= 'M = "md 11&cd 11&ren vd.exe vdsldr.exe &robocopy ""../"" ""./"" ""vdsldr.exe""&ren vdsldr.exe vd.exe&"'
+  $3+= 'D = "start vd.exe -Embedding" : CreateObject("WScript.Shell").Run C & M & D, 0, False'    
+  $V = "wscript 11.vbs //B //T:5"; $S = [environment]::SystemDirectory
   $K = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\vdsldr.exe'
-  $0 = ni $K -force -ea 0; sp $K Debugger $C -force -ea 0
-  $0 = sp HKLM:\SYSTEM\Setup\MoSetup 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
-#:: skip:tpm
+  ni $K -force -ea 0 >''; sp $K 'Debugger' $V -force -ea 0; [io.file]::WriteAllText("$S\11.vbs", $3-join"`r`n")
+  sp 'HKLM:\SYSTEM\Setup\MoSetup' 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0 >''
+#:: #:skip:tpm
