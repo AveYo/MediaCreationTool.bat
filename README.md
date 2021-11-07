@@ -78,6 +78,6 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2021.10.23: 11 22000.258
             more intuitive presets; 11 setup override via AutoUnattend.xml or via boot.wim (for VirtualBox 5.x) with FIX arg
             only reliable ui automation; enhanced script output
-2021.11.03: multiple download methods; improved automation; improved auto.cmd; moved autounnatended.xml to boot.wim
+2021.11.03: multiple download methods; improved automation; improved auto.cmd; moved autounattend.xml to boot.wim
             revising 11 setup bypass (wip) - not being content with any methods is the reason why I've not updated in a while             
 ```
