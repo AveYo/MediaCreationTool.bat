@@ -3,7 +3,7 @@
 :: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
 :: Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
 :: Changelog: 2021.11.09 perfect?
-:: - skip windows 11 upgrade checks with setup.exe (not just auto.cmd); no server label; local account on 11 home           
+:: - skip windows 11 upgrade checks with setup.exe (not just auto.cmd); no server label; local account on 11 home
 :: - auto.cmd has more fixes to keep files and apps on upgrade; reliable ui automation; alternative downloaders 
 :: 11: 22000.258 / 21H2: 19044.1165 / 21H1: 19043.928 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
@@ -829,7 +829,7 @@ set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:PRODUCTS_XML\:' ,3
 set ^ #=& set "0=%~f0"& set 1=;PRODUCTS_XML %*& powershell -nop -c "%#%"& exit/bat/ps1
 function PRODUCTS_XML { [xml]$xml = [io.file]::ReadAllText("$pwd\products.xml",[Text.Encoding]::UTF8); $root = $null
  $eulas = 0; $langs = 0; $ver = $env:VER; $vid = $env:VID; $X = $env:X; if ($X-eq'11') {$vid = "11 $env:VIS"}
- $url = "http//:fg.ds.b1.download.windowsupdate.com/"
+ $url = "http://fg.ds.b1.download.windowsupdate.com/"
 #:: apply/insert Catalog version attribute for MCT compatibility
  if ($null -ne $xml.SelectSingleNode('/MCT')) {
    $xml.MCT.Catalogs.Catalog.version = $env:CC; $root = $xml.SelectSingleNode('/MCT/Catalogs/Catalog/PublishedMedia')
