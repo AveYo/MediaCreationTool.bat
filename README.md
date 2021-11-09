@@ -6,7 +6,7 @@ Windows 11
 ---------  
 Script creates media that will **automatically skip upgrade or clean install checks**  
 Sharpest bypass I came up with is using `/Product Server` option or `<INSTALLATIONTYPE>Server` on the install image,  
-tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artefact _(not purely cosmetic)_,  
+tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artifact _(not purely cosmetic)_,  
 so the methods used are my originals _Appraiser_Data.ini_ trick to upgrade plus _winsetup.dll_ patching in _boot.wim_.  
 
 Check out the **bypass11 folder** for alternatives / standalone scripts [pending]  
@@ -29,7 +29,7 @@ Script works just as well as before, not having to deal with microsoft's latest 
 Presets  
 -------  
 >1 **Auto Upgrade** with detected media, script assists setupprep for upgrading directly  
-> _- can keep files and apps on mor scenarios such as cross-edition setups_
+> _- can keep files and apps on more scenarios such as cross-edition setups_
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
 
 >2 **Make ISO** with detected media in `Downloads` folder directly  
@@ -68,11 +68,11 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2019.05.22: 1903 [19H1]
 2019.07.11: 1903 __release_svc_refresh__ and enable DynamicUpdate by default to grab latest CU
 2019.09.29: UPDATED 19H1 build 18362.356 ; RS5 build 17763.379 and show build number
-            added LATEST MCT choice to dinamically download the current version (all others have hard-coded links)
+            added LATEST MCT choice to dynamically download the current version (all others have hard-coded links)
 2019.11.16: 19H2 18363.418 as default choice (updated hard-coded links)
 2020.02.29: 19H2 18363.592
 2020.05.28: 2004 19041.264 first release
-2020.10.29: 20H2 and aniversary script refactoring to support all MCT versions from 1507 to 20H2!!!
+2020.10.29: 20H2 and anniversary script refactoring to support all MCT versions from 1507 to 20H2!!!
 2020.10.30: hotfix utf-8, enterprise on 1909+
 2020.11.01: fix remove unsupported options in older versions code breaking when path has spaces.. pff
 2020.11.14: generate latest links for 1909,2004; all xml editing now in one go; resolved known cannot run script issues
@@ -93,7 +93,7 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2021.09.30: fix Auto Setup preset not launching.. automatically
 2021.10.04: fix for long standing tr localization quirks; Skip TPM Check v2 (ifeo-based instead of wmi)
 2021.10.05: 11 22000.194 Release (rofl W11 MCT has limited capabilities, so still using 21H1 MCT because it works fine)
-2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearence
+2021.10.09: outstanding refactoring around Windows 11 MCT; minimize while waiting MCT; unified 7 - 11 appearance
 2021.10.20: create generic iso if no edition arg; use Downloads folder; no 11 setup checks on boot in VirtualBox; fixes #2
 2021.10.23: 11 22000.258
             more intuitive presets; 11 setup override via AutoUnattend.xml or via boot.wim (for VirtualBox 5.x) with FIX arg
