@@ -6,10 +6,10 @@ Windows 11
 ---------  
 Script creates media that will **automatically skip upgrade or clean install checks**  
 Sharpest bypass I came up with is using `/Product Server` option or `<INSTALLATIONTYPE>Server` on the install image,  
-tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artefact _(not purely cosmetic)_,  
+tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artifact _(not purely cosmetic)_,  
 so the methods used are my originals _Appraiser_Data.ini_ trick to upgrade plus _winsetup.dll_ patching in _boot.wim_.  
 
-Check out the **bypass11 folder** for alternatives / standalone scripts [pending]  
+Check out the **bypass11 folder** for alternatives / standalone scripts  
 [Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat)  
 usable with any downloaded windows 11 iso or extracted esd and wim  
 right-click file - SendTo - select script to toggle bypass on or off (kickass feature: it restores iso to original hash)  
@@ -18,7 +18,7 @@ tho you can add a generic ei.cfg to the media\sources yourself:
 `[Channel]`  
 `_Default`  
 
-[Skip_TPM_Check_on_Dynamic_Update v4](bypass11/Skip_TPM_Check_on_Dynamic_Update_v4.cmd) and older v3, v2, v1  
+[Skip_TPM_Check_on_Dynamic_Update v4 (wip) and previous v3, v2, v1](bypass11/archived)  
 will bypass windows 11 setup that was run manually under windows, or **via windows update**  
 _bypass getting 11 after OfflineInsiderEnroll to Beta or Dev channels and doing an update check_  
 
@@ -29,13 +29,13 @@ Script works just as well as before, not having to deal with microsoft's latest 
 Presets  
 -------  
 >1 **Auto Upgrade** with detected media, script assists setupprep for upgrading directly  
-> _- can keep files and apps on mor scenarios such as cross-edition setups_
+> _- can keep files and apps on more scenarios such as cross-edition setups_  
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
 
 >2 **Make ISO** with detected media in `Downloads` folder directly  
 > _- can override detected media by adding edition name / language / arch to script name_  
 
->3 **Make USB** with detected media in specified usb target    
+>3 **Make USB** with detected media in specified usb target  
 > _- can click Back and select ISO instead to save in a different path_  
 
 >4 **Select** with picked Edition, Language, Arch - on specified target  
@@ -50,7 +50,7 @@ Presets
 > _- write `sources\PID.txt` to preselect edition at media boot or setup within windows (if configured)_  
 > _- write `auto.cmd` to re-run upgrade with cross-edition support from media on demand_  
 > _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home_  
-> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup cock-blocks when booting from media_    
+> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup cock-blocks when booting from media_  
 
 > configure via set vars, commandline parameters or rename script like `iso 21H2 Pro MediaCreationTool.bat`  
 > recommended windows setup options with the least amount of issues on upgrades set via auto.cmd  
@@ -99,7 +99,10 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
             more intuitive presets; 11 setup override via AutoUnattend.xml or via boot.wim (for VirtualBox 5.x) with FIX arg
             only reliable ui automation; enhanced script output
 2021.11.03: multiple download methods; improved automation; improved auto.cmd; moved autounattend.xml to boot.wim
-            revising 11 setup bypass (wip) - not being content with any methods is the reason why I've not updated in a while             
-2021.11.09: skip windows 11 upgrade checks with setup.exe (not just auto.cmd); no server label; local account on 11 home           
+            revising 11 setup bypass (wip) - not being content with any methods is the reason why I've not updated in a while
+2021.11.09: skip windows 11 upgrade checks with setup.exe (not just auto.cmd); no server label; local account on 11 home
             auto.cmd has more fixes to keep files and apps on upgrade; reliable ui automation; alternative downloaders 
+2021.11.15: 11 22000.318
+            write output to script folder (or C:\ESD if run from zip); style: more consistent separation of arguments
+            20H2 builds with esd size above 4GB that had to be reverted at 19042.631: en,de,es,pt,fr,it,jp,zh (MCT limits)
 ```
