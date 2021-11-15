@@ -32,7 +32,7 @@ Presets
 > _- can keep files and apps on more scenarios such as cross-edition setups_  
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
 
->2 **Make ISO** with detected media in `Downloads` folder directly  
+>2 **Make ISO** with detected media in current folder directly _(or C:\ESD if run from zip)_  
 > _- can override detected media by adding edition name / language / arch to script name_  
 
 >3 **Make USB** with detected media in specified usb target  
