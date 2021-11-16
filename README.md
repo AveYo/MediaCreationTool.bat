@@ -105,4 +105,5 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2021.11.15: 11 22000.318
             write output to script folder (or C:\ESD if run from zip); style: more consistent separation of arguments
             20H2 builds with esd size above 4GB that had to be reverted at 19042.631: en,de,es,pt,fr,it,jp,zh (MCT limits)
+2021.11.16: 10 19044.1288 - official release of 10 21H2
 ```
