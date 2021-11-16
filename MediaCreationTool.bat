@@ -294,7 +294,7 @@ fltmc>nul || (set _=start "MCT" cmd /d/x/r call "%~f0" %* %set%& powershell -nop
 mkdir "%ROOT%\MCT" >nul 2>nul & attrib -R -S -H %ROOT% /D & pushd "%ROOT%\MCT"
 del /f /q products.* *.key EI.cfg PID.txt auto.cmd AutoUnattend.xml >nul 2>nul 
 set /a latest=0 & if exist latest set /p latest=<latest
-echo,20211109>latest & if %latest% lss 20211109 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
+echo,20211116>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
 
 ::# edition fallback to ones that MCT supports - after selection
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
