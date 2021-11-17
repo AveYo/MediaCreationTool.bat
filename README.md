@@ -18,7 +18,7 @@ tho you can add a generic ei.cfg to the media\sources yourself:
 `[Channel]`  
 `_Default`  
 
-[Skip_TPM_Check_on_Dynamic_Update v4 (wip) and previous v3, v2, v1](bypass11/archived)  
+[Skip_TPM_Check_on_Dynamic_Update v4 and previous v3, v2, v1](bypass11/Skip_TPM_Check_on_Dynamic_Update_v4.cmd)  
 will bypass windows 11 setup that was run manually under windows, or **via windows update**  
 _bypass getting 11 after OfflineInsiderEnroll to Beta or Dev channels and doing an update check_  
 
