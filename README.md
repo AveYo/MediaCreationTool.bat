@@ -2,29 +2,47 @@ Not just an Universal MediaCreationTool wrapper script with ingenious support fo
 <img src="preview.png">
 A powerful yet simple windows 10 / 11 deployment automation tool as well!  
 
-Windows 11  
----------  
-Script creates media that will **automatically skip upgrade or clean install checks**  
-Sharpest bypass I came up with is using `/Product Server` option or `<INSTALLATIONTYPE>Server` on the install image,  
-tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artifact _(not purely cosmetic)_,  
-so the methods used are my originals _Appraiser_Data.ini_ trick to upgrade plus _winsetup.dll_ patching in _boot.wim_.  
+Windows 10  
+----------  
+[MediaCreationTool.bat](MediaCreationTool.bat) works just as well as before, not having to deal with install checks annoyances..  
 
-Check out the **bypass11 folder** for alternatives / standalone scripts  
-[Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat)  
-usable with any downloaded windows 11 iso or extracted esd and wim  
-right-click file - SendTo - select script to toggle bypass on or off (kickass feature: it restores iso to original hash)  
-business / enterprise media is best since it comes with ei.cfg so setup won't ask for a key at start  
-tho you can add a generic ei.cfg to the media\sources yourself:  
+
+Windows 11  
+----------  
+[MediaCreationTool.bat](MediaCreationTool.bat) creates 11 media that will **automatically skip upgrade or clean install checks**  
+with 11 Setup label (not changed to Server) and with local account support on 11 Home editions  
+>Sharpest 11 bypass atm is using `/Product Server` option or `<INSTALLATIONTYPE>Server` on the install image,  
+tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artifact _(not purely cosmetic)_,  
+so the methods used are my older _Appraiser_Data.ini_ trick to upgrade plus _winsetup.dll_ patching in _boot.wim_.  
+
+note that `MCT Defaults` preset creates a vanilla media without modifications! all others skip install checks  
+
+Get RP/BETA/DEV 11 builds via Windows Update on allegedly "unsupported" hardware  
+--------------------------------------------------------------------------------  
+Step 1: use [OfflineInsiderEnroll](https://github.com/abbodi1406/offlineinsiderenroll) to subscribe to the channel you want  
+_while on 10, use BETA for Windows 11 22000.x builds (release), DEV for Windows 11 225xx.x builds (experimental)_  
+
+Step 2: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/) to automatically bypass setup requirements  
+_It's a set it and forget it script, with built-in undo_  
+
+Step 3: check for updates via Settings - Windows Update and select Upgrade to Windows 11  
+
+
+If you already have an 11 ISO, USB or extracted Files and want to add a bypass  
+------------------------------------------------------------------------------  
+[Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat) from the confort of right-click - SendTo menu  
+
+switches installation type to Server skipping install checks, or back to Client if run again on the same file, restoring hash!  
+
+**directly** on any downloaded windows 11 iso or extracted esd and wim, so there's no iso / dism mounting  
+
+_defiantly quick_  
+
+works great with business / enterprise media since it comes with ei.cfg so setup won't ask for a setup key at start  
+tho you can add a generic `ei.cfg` to the media\sources yourself with this content:  
 `[Channel]`  
 `_Default`  
 
-[Skip_TPM_Check_on_Dynamic_Update v4 and previous v3, v2, v1](bypass11/Skip_TPM_Check_on_Dynamic_Update_v4.cmd)  
-will bypass windows 11 setup that was run manually under windows, or **via windows update**  
-_bypass getting 11 after OfflineInsiderEnroll to Beta or Dev channels and doing an update check_  
-
-Windows 10  
----------  
-Script works just as well as before, not having to deal with microsoft's latest anti-consumer practices..  
 
 Presets  
 -------  
