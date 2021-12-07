@@ -9,28 +9,34 @@ Windows 10
 
 Windows 11  
 ----------  
-[MediaCreationTool.bat](MediaCreationTool.bat) creates 11 media that will **automatically skip upgrade or clean install checks**  
-with 11 Setup label (not changed to Server) and with local account support on 11 Home editions  
->Sharpest 11 bypass atm is using `/Product Server` option or `<INSTALLATIONTYPE>Server` on the install image,  
-tho I understand that many of you dislike the _Installing Windows Server_ cosmetic artifact _(not purely cosmetic)_,  
-so the methods used are my older _Appraiser_Data.ini_ trick to upgrade plus _winsetup.dll_ patching in _boot.wim_.  
+[MediaCreationTool.bat](MediaCreationTool.bat) creates 11 media that will **automatically skip clean install checks**  
+setup.exe will not automatically skip upgrade checks - launch the included `auto.cmd` instead!  
 
-note that `MCT Defaults` preset creates a vanilla media without modifications! all others skip install checks  
+For a more reliable and future-proof experience,  
+clean installation is still handled via _winsetup.dll_ patching in _boot.wim_  
+upgrade is now handled only via `auto.cmd` with the */Product Server* trick  
+Just ignore the *Windows Server* label, please!  
+  
+Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) **will skip upgrade checks via setup.exe as well**  
+
+Note that `MCT Defaults` preset creates a vanilla media without modifications! all others skip install checks    
 
 Get RP/BETA/DEV 11 builds via Windows Update on allegedly "unsupported" hardware  
 --------------------------------------------------------------------------------  
 Step 1: use [OfflineInsiderEnroll](https://github.com/abbodi1406/offlineinsiderenroll) to subscribe to the channel you want  
 _while on 10, use BETA for Windows 11 22000.x builds (release), DEV for Windows 11 225xx.x builds (experimental)_  
 
-Step 2: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/) to automatically bypass setup requirements  
-_It's a set it and forget it script, with built-in undo_  
+Step 2: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) to automatically bypass setup requirements  
+_It's a set it and forget it script, with built-in undo - v6 using more reliable /Product Server trick_  
 
 Step 3: check for updates via Settings - Windows Update and select Upgrade to Windows 11  
 
+Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) **will work for manual upgrade as well**  
+_regardless of mounted iso / usb media already having a bypass added or not_  
 
 If you already have an 11 ISO, USB or extracted Files and want to add a bypass  
 ------------------------------------------------------------------------------  
-[Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat) from the confort of right-click - SendTo menu  
+Use [Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat) from the confort of right-click - SendTo menu  
 
 switches installation type to Server skipping install checks, or back to Client if run again on the same file, restoring hash!  
 
@@ -38,11 +44,15 @@ switches installation type to Server skipping install checks, or back to Client 
 
 _defiantly quick_  
 
-works great with business / enterprise media since it comes with ei.cfg so setup won't ask for a setup key at start  
-tho you can add a generic `ei.cfg` to the media\sources yourself with this content:  
+works great with business / enterprise media since it comes with ei.cfg so setup won't ask for product key at start  
+for consumer / core media you can add a generic `ei.cfg` to the media\sources yourself with this content:  
 `[Channel]`  
 `_Default`  
 
+if setup still asks for product key, input gvlk keys found in media\sources\product.ini  
+_gvlkprofessional=W269N-WFGWX-YVC9B-4J6C9-T83GX gvlkcore=TX9XD-98N7V-6WMQ6-BX7FG-H8Q99_  
+_gvlkenterprise=NPPR9-FWDCX-D2C8J-H872K-2YT43 gvlkeducation=NW6C2-QMPVW-D7KKK-3GKT6-VCFB2 etc._  
+  
 
 Presets  
 -------  
@@ -68,7 +78,7 @@ Presets
 > _- write `sources\PID.txt` to preselect edition at media boot or setup within windows (if configured)_  
 > _- write `auto.cmd` to re-run upgrade with cross-edition support from media on demand_  
 > _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home_  
-> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup cock-blocks when booting from media_  
+> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media_  
 
 > configure via set vars, commandline parameters or rename script like `iso 21H2 Pro MediaCreationTool.bat`  
 > recommended windows setup options with the least amount of issues on upgrades set via auto.cmd  
@@ -125,4 +135,5 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
             20H2 builds with esd size above 4GB that had to be reverted at 19042.631: en,de,es,pt,fr,it,jp,zh (MCT limits)
 2021.11.16: 10 19044.1288 - official release of 10 21H2
             10 19043.1348 - newest 10 build - don't ask why ms is releasing these as such, it's not the first time
+2021.12.07: skip windows 11 upgrade checks only via auto.cmd - just ignore server label, please
 ```

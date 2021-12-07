@@ -2,9 +2,9 @@
 :Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 21H2!
 :: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
 :: Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
-:: Changelog: 2021.11.16
+:: Changelog: 2021.12.07
+:: - skip windows 11 upgrade checks only via auto.cmd - just ignore server label, please; local account on 11 Home
 :: - write output to script folder (or C:\ESD if run from zip); do not use esd links larger than 4GB (MCT limits)
-:: - skip windows 11 upgrade checks with setup.exe (not just auto.cmd); no server label; local account on 11 Home
 :: 11: 22000.318 / 21H2: 19044.1288 / 21H1: 19043.1348 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
 ::# uncomment to skip GUI dialog for MCT choice: 1507 to 2109 / 11 - or rename script: "21H2 MediaCreationTool.bat"
@@ -295,7 +295,7 @@ fltmc>nul || (set _=start "MCT" cmd /d/x/r call "%~f0" %* %set%& powershell -nop
 mkdir "%ROOT%\MCT" >nul 2>nul & attrib -R -S -H %ROOT% /D & pushd "%ROOT%\MCT"
 del /f /q products.* *.key EI.cfg PID.txt auto.cmd AutoUnattend.xml >nul 2>nul 
 set /a latest=0 & if exist latest set /p latest=<latest
-echo,20211116>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
+echo,20211207>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
 
 ::# edition fallback to ones that MCT supports - after selection
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
@@ -390,7 +390,7 @@ if not defined PKEY if "Enterprise" equ "%EDITION%" set "KEY=" &rem explicitly r
 if not defined KEY (del /f /q PID.txt 2>nul) else (echo;[PID]& echo;Value=%KEY%& echo;;Edition=%EDITION%)>PID.txt
 
 ::# generate EI.cfg for skipping key entry for generic 11 media
-if not defined KEY if %CFG% equ Consumer if %VER% geq 22000 (echo;[Channel]& echo;_Default)>EI.cfg    
+if not defined KEY if %VER% geq 22000 (echo;[Channel]& echo;_Default)>EI.cfg    
 
 ::# generate auto.cmd for upgrading without prompts - also copied to media so it can be re-run on demand 
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_auto_cmd')[1];"
@@ -400,7 +400,7 @@ set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]g
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_AutoUnattend_xml')[1];"
 
 ::# start script-assisted MCT via powershell (to monitor setup state and take necessary action)
-set "0=%~f0"& start "MCT" /wait /b powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
+set "0=%~f0"& start "MCT" /wait /b powershell -nop -noe -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
 
 ::--------------------------------------------------------------------------------------------------------------------------------
 EXIT /BATCH DONE
@@ -486,7 +486,7 @@ EXIT /BATCH DONE
    if ('Auto Upgrade' -ne $env:PRESET -and $null -eq $USB) {write-host -fore Gray "Prepare", $ISO}
    if ('Auto Upgrade' -ne $env:PRESET -and $null -ne $USB) {write-host -fore Gray "Prepare", $USB}
    if ('Auto Upgrade' -eq $env:PRESET) {write-host -fore Gray "Prepare", $DIR}
-   $label = "${env:X}_${env:VIS}_" + ($ESD -split '_client')[1]
+   $label = "${env:X}_${env:VIS}" + ($ESD -split '(?=_vol_|_ret_)')[1] 
    write-host -fore Gray "FromESD", $label; sleep 10; powershell -win $env:hide -nop -c ";"
 
   #:: watch setup files progress from the sideline (MCT has authoring control)
@@ -497,15 +497,11 @@ EXIT /BATCH DONE
   #:: add to media $OEM$, EI.cfg, PID.txt, auto.cmd (includes 11 Setup override) - disable via DEF arg
    pushd -lit "$env:ROOT"; foreach ($P in "$DIR\x86\sources","$DIR\x64\sources","$DIR\sources") {
      if (($null -ne $env:DEF) -or !(test-path "$P\setupprep.exe")) {continue}
+     if ($ESD -like '*_vol_*') {del "MCT\EI.cfg" -force -ea 0 >''}
      $f1 = '$OEM$'; if (test-path -lit $f1) {xcopy /CYBERHIQ $f1 "$P\$f1" >''; write-host -fore Gray AddFile $f1}
      $f2 = "MCT\EI.cfg"; if (test-path $f2) {copy -path $f2 -dest $P -force >''; write-host -fore Gray AddFile $f2}
      $f3 = "MCT\PID.txt"; if (test-path $f3) {copy -path $f3 -dest $P -force >''; write-host -fore Gray AddFile $f3}
      $f4 = "MCT\auto.cmd"; if (test-path $f4) {copy -path $f4 -dest $DIR -force >''; write-host -fore Gray AddFile $f4}
-     #:: skip windows 11 upgrade checks - for running setup.exe with or without Dynamic Update on cock-blocked configurations
-     if ($env:VER -ge 22000) {
-       new-item -itemtype "file" -path "$P\Panther\Appraiser_Data.ini" -name "Pass" -value "AveYo" -force -ea 0 >''
-       write-host -fore Gray AddFile Windows 11 Upgrade Pass
-     }
    } ; popd
   
   #:: done if not 11 or auto upgrade preset
@@ -560,7 +556,7 @@ EXIT /BATCH DONE
    write-host "`r`n UPGRADING ... `r`n"; sleep 7; return
  } 
 
-#:: skip windows 11 upgrade checks - for running setup from boot media on cock-blocked configurations
+#:: skip windows 11 upgrade checks - for running setup from boot media
  if ($env:VER -ge 22000 -and (test-path "$DIR\sources\boot.wim")) {
    write-host -fore Yellow "Disable boot.wim 11 setup checks"
    rmdir "$WD\MOUNT" -re -force -ea 0; mkdir "$WD\MOUNT" -force -ea 0 >''; $winsetup = "$WD\MOUNT\sources\winsetup.dll"
@@ -590,7 +586,7 @@ EXIT /BATCH DONE
    start -nonew cmd "/d/x/c rmdir /s /q ""$DIR"" & del /f /q ""$WS\*.*""" >'' 
  }
 
- write-host "`r`n DONE `r`n"; sleep 7; return
+ write-host "`r`nDONE`r`n"; sleep 7; return
 #:: done #:Assisted_MCT
 ::--------------------------------------------------------------------------------------------------------------------------------
 
@@ -675,8 +671,11 @@ if defined change for %%i in (!e%change%!) do (set change=%%i)& rem if defined p
 echo;Edition change: %change%
 echo;Selected index: %index%
 
-::# prevent usage of MCT for intermediary upgrade in Dynamic Update (causing 7 to 19H1 instead of 7 to 11 for example) 
+::# prevent usage of MCT for intermediary upgrade in Dynamic Update (causing 7 to 19H1 instead of 7 to 21H2 for example) 
 if "%Build1%" gtr "15063" (set OPTIONS=%OPTIONS% /UpdateMedia Decline)
+
+::# skip windows 11 upgrade checks via launch option trick - this way, can still run setup.exe directly to not skip checks
+if "%Build1%" geq "22000" (set OPTIONS=/Product Server %OPTIONS%)
 
 ::# auto upgrade with edition lie workaround to keep files and apps - all 1904x builds allow up/downgrade between them
 if defined change call :rename %change%
