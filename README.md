@@ -31,9 +31,6 @@ _It's a set it and forget it script, with built-in undo - v6 using more reliable
 
 Step 3: check for updates via Settings - Windows Update and select Upgrade to Windows 11  
 
-Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) **will work for manual upgrade as well**  
-_regardless of mounted iso / usb media already having a bypass added or not_  
-
 If you already have an 11 ISO, USB or extracted Files and want to add a bypass  
 ------------------------------------------------------------------------------  
 Use [Quick_11_iso_esd_wim_TPM_toggle.bat](bypass11/Quick_11_iso_esd_wim_TPM_toggle.bat) from the confort of right-click - SendTo menu  
@@ -52,6 +49,9 @@ for consumer / core media you can add a generic `ei.cfg` to the media\sources yo
 if setup still asks for product key, input gvlk keys found in media\sources\product.ini  
 _gvlkprofessional=W269N-WFGWX-YVC9B-4J6C9-T83GX gvlkcore=TX9XD-98N7V-6WMQ6-BX7FG-H8Q99_  
 _gvlkenterprise=NPPR9-FWDCX-D2C8J-H872K-2YT43 gvlkeducation=NW6C2-QMPVW-D7KKK-3GKT6-VCFB2 etc._  
+
+Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) **will work for manual upgrade as well**  
+_regardless of mounted iso / usb media already having a bypass added or not_  
   
 
 Presets  
