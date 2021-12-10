@@ -23,11 +23,11 @@ Note that `MCT Defaults` preset creates a vanilla media without modifications! a
 
 Get RP/BETA/DEV 11 builds via Windows Update on allegedly "unsupported" hardware  
 --------------------------------------------------------------------------------  
-Step 1: use [OfflineInsiderEnroll](https://github.com/abbodi1406/offlineinsiderenroll) to subscribe to the channel you want  
-_while on 10, use BETA for Windows 11 22000.x builds (release), DEV for Windows 11 225xx.x builds (experimental)_  
+Step 1: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) to automatically bypass setup requirements  
+_It's a set it and forget it script, with built-in undo - v7 using more reliable /Product Server trick_  
 
-Step 2: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) to automatically bypass setup requirements  
-_It's a set it and forget it script, with built-in undo - v6 using more reliable /Product Server trick_  
+Step 2: use [OfflineInsiderEnroll](https://github.com/abbodi1406/offlineinsiderenroll) to subscribe to the channel you want  
+_while on 10, use BETA for Windows 11 22000.x builds (release), DEV for Windows 11 225xx.x builds (experimental)_  
 
 Step 3: check for updates via Settings - Windows Update and select Upgrade to Windows 11  
 
@@ -66,7 +66,7 @@ Presets
 >3 **Make USB** with detected media in specified usb target  
 > _- can click Back and select ISO instead to save in a different path_  
 
->4 **Select** with picked Edition, Language, Arch - on specified target  
+>4 **Select** with user picked Edition, Language, Arch (x86,x64,both) - on specified target  
 > _- implicit choice, will include setup override files_  
 
 >5 **MCT Defaults** with GUI selected media, makes vanilla, default MCT iso/usb  
