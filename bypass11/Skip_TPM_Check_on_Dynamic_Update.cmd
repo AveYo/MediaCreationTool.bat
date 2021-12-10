@@ -1,16 +1,16 @@
 @(set "0=%~f0"^)#) & powershell -nop -c iex([io.file]::ReadAllText($env:0)) & exit/b
 #:: double-click to run or just copy-paste into powershell - it's a standalone hybrid script
 #::
-#:: v6 dynamically skips the anti-consumer windows 11 setup checks via /Product Server trick  
+#:: v6f dynamically skips the anti-consumer windows 11 setup checks via /Product Server trick  
 #:: it is most reliable, and only has a 'Windows Server' label cosmetic-ish difference
 #:: works with:
 #:: 11 setup via Windows Update (after using OfflineInsiderEnroll by whatever127 and abbodi1406)
 #:: 11 setup via mounted iso / usb (use the Quick.. script for skipping 11 setup checks at boot)
 #::
 $_Paste_in_Powershell = { $Code = @'
-$Nfo = 'Skip TPM Check on Dynamic Update v6, AveYo 2021'
+$Nfo = 'Skip TPM Check on Dynamic Update v6f, AveYo 2021'
 $Arg = (([environment]::get_CommandLine()-split'-[-]% ')[1]-split'.exe[\p{P}]? ')[1]
-foreach ($x in 'Product','DynamicUpdate','Telemetry') {$Arg = $Arg -replace $(' .?/' + $x + '.? .?[A-Z]+.? '),' '}
+foreach ($x in 'Product','DynamicUpdate','Telemetry') {$Arg = $Arg-replace$('\p{P}?/' + $x + '\p{P}? \p{P}?[A-Z]+\p{P}? '),' '}
 $Cli = ' /DynamicUpdate Disable /Telemetry Disable ' + $Arg; $Srv = ' /Product Server' + $Cli
 $Dir = join-path $([Environment]::SystemDirectory[0..2]-join'') '$WINDOWS.~BT\Sources\'
 $Cfg = join-path $Dir 'EI.cfg'; $EI = '[Channel]' +[char]13+[char]10+ '_Default' +[char]13+[char]10
@@ -34,12 +34,12 @@ $Skip = "powershell -win 1 -nop -c iex (get-itemproperty '$IFEO\0' 'Code' -ea 0)
 remove-item $($IFEO -replace 'SetupHost', 'vdsldr') -rec -force -ea 0 >''; rmdir (split-path $Prog) -rec -force -ea 0 >''
 if (test-path "$IFEO\0") {
   remove-item $IFEO -rec -force -ea 0 >''
-  write-host -fore 0xf -back 0xd "`n Skip TPM Check on Dynamic Update v6 [REMOVED] run again to install "
+  write-host -fore 0xf -back 0xd "`n Skip TPM Check on Dynamic Update v6f [REMOVED] run again to install "
 } else {                              
   new-item "$IFEO\0" -force -ea 0 >'' 
   set-itemproperty "$IFEO\0" 'Debugger' $Skip -force -ea 0; set-itemproperty "$IFEO\0" 'Code' $Code -force -ea 0
   set-itemproperty "$IFEO\0" 'FilterFullPath' $Prog -force -ea 0; set-itemproperty $IFEO 'UseFilter' 1 -type dword -force -ea 0
-  write-host -fore 0xf -back 0x2 "`n Skip TPM Check on Dynamic Update v6 [INSTALLED] run again to remove " } ; timeout /t 5
+  write-host -fore 0xf -back 0x2 "`n Skip TPM Check on Dynamic Update v6f [INSTALLED] run again to remove " } ; timeout /t 5
 } ; start -verb runas powershell -args "-nop -c & {`n`n$($_Paste_in_Powershell-replace'"','\"')}"
 $_Press_Enter
 #::
