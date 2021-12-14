@@ -2,9 +2,9 @@
 :Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 21H2!
 :: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
 :: Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
-:: Changelog: 2021.12.07
-:: - skip windows 11 upgrade checks only via auto.cmd - just ignore server label, please; local account on 11 Home
-:: - write output to script folder (or C:\ESD if run from zip); do not use esd links larger than 4GB (MCT limits)
+:: Changelog: 2021.12.15
+:: - fix regression with 1507-1709 not getting the correct fallback esd; fix dev '-noe' not autoclosing script    
+:: - skip 11 checks only via auto.cmd - ignore server label, please; local acc on 11 Home; output to CD or C:\ESD
 :: 11: 22000.318 / 21H2: 19044.1288 / 21H1: 19043.1348 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
 ::# uncomment to skip GUI dialog for MCT choice: 1507 to 2109 / 11 - or rename script: "21H2 MediaCreationTool.bat"
@@ -113,8 +113,9 @@ if not defined VID (set VID=%OS_VID%)
 
 ::# edition fallback to ones that MCT supports
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
-(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterprise=Enterprise%)
 (set MEDIA_EDITION=%MEDIA_EDITION:EnterpriseS=Enterprise%)
+(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterprise=Enterprise%)
+(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterpriseS=Enterprise%)
 
 ::# get previous GUI selection if self elevated and skip to choice
 for %%s in (%*) do for %%P in (1 2 3 4) do if %%~ns gtr 0 if %%~ns lss 15 if %%~xs. equ .%%P. set /a PRE=%%P& set /a MCT=%%~ns
@@ -308,8 +309,9 @@ if %VER% leq 16299 (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalEducation=Educa
 if %VER% leq 10586 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 15063 if %INSERT_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 10586 if %UNHIDE_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Education=Professional%)
-if %VER% neq 15063 (set MEDIA_EDITION=%MEDIA_EDITION:Cloud=Professional%) 
-if not defined EDITION if "%MEDIA_EDITION%" neq "%OS_EDITION%" set "EDITION=%MEDIA_EDITION%"
+if %VER% neq 15063 (set MEDIA_EDITION=%MEDIA_EDITION:Cloud=Professional%)
+if "%MEDIA_EDITION%" neq "%OS_EDITION%" set "REG_EDITION=%MEDIA_EDITION%"
+if defined EDITION (set EDITION=%MEDIA_EDITION%)  
 
 ::# generic key preset - only for staged editions in MCT install.esd - see sources\product.ini
 for %%s in (%MEDIA_EDITION%) do for %%K in (
@@ -400,7 +402,7 @@ set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]g
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_AutoUnattend_xml')[1];"
 
 ::# start script-assisted MCT via powershell (to monitor setup state and take necessary action)
-set "0=%~f0"& start "MCT" /wait /b powershell -nop -noe -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
+set "0=%~f0"& start "MCT" /wait /b powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
 
 ::--------------------------------------------------------------------------------------------------------------------------------
 EXIT /BATCH DONE
@@ -416,10 +418,10 @@ EXIT /BATCH DONE
  cd -Lit("$env:ROOT\MCT")
 
 #:: workaround for version 1703 and earlier not having media selection switches
- $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'
- if ($env:VER -le 15063 -and $null -ne $env:EDITION) {
-   reg add $K /v EditionID /d $env:EDITION /reg:32 /f>'' 2>''; reg delete $K /v ProductName /reg:32 /f>'' 2>''
-   reg add $K /v EditionID /d $env:EDITION /reg:64 /f>'' 2>''; reg delete $K /v ProductName /reg:64 /f>'' 2>''
+ if ($env:VER -le 15063 -and $null -ne $env:REG_EDITION) {
+   $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'; $E = $env:REG_EDITION
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:32 /f & reg delete $K /v ProductName /reg:32 /f) >nul 2>nul"
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:64 /f & reg delete $K /v ProductName /reg:64 /f) >nul 2>nul"
  }
 
 #:: setup file watcher to minimally track progress
@@ -486,7 +488,7 @@ EXIT /BATCH DONE
    if ('Auto Upgrade' -ne $env:PRESET -and $null -eq $USB) {write-host -fore Gray "Prepare", $ISO}
    if ('Auto Upgrade' -ne $env:PRESET -and $null -ne $USB) {write-host -fore Gray "Prepare", $USB}
    if ('Auto Upgrade' -eq $env:PRESET) {write-host -fore Gray "Prepare", $DIR}
-   $label = "${env:X}_${env:VIS}" + ($ESD -split '(?=_vol_|_ret_)')[1] 
+   $label = "${env:X}_${env:VIS}" + ($ESD -split '(?=_client)')[1] 
    write-host -fore Gray "FromESD", $label; sleep 10; powershell -win $env:hide -nop -c ";"
 
   #:: watch setup files progress from the sideline (MCT has authoring control)
@@ -544,10 +546,10 @@ EXIT /BATCH DONE
  }
 
 #:: undo workaround for version 1703 and earlier not having media selection switches
- if ($env:VER -le 15063 -and $null -ne $env:EDITION) {
-   $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'
-   reg add $K /v EditionID /d $env:OS_EDITION /reg:32 /f>'' 2>''; reg add $K /v ProductName /d $env:OS_PRODUCT /reg:32 /f>'' 2>''
-   reg add $K /v EditionID /d $env:OS_EDITION /reg:64 /f>'' 2>''; reg add $K /v ProductName /d $env:OS_PRODUCT /reg:64 /f>'' 2>''
+ if ($env:VER -le 15063 -and $null -ne $env:REG_EDITION) {
+   $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'; $E = $env:OS_EDITION; $P = $env:OS_PRODUCT
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:32 /f & reg add $K /v ProductName /d $P /reg:32 /f) >nul 2>nul"
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:64 /f & reg add $K /v ProductName /d $P /reg:64 /f) >nul 2>nul"
  }
 
 #:: Auto Upgrade preset starts auto.cmd from $DIR = C:\$WINDOWS.~WS\Sources\Windows 
@@ -913,18 +915,19 @@ function PRODUCTS_XML { [xml]$xml = [io.file]::ReadAllText("$pwd\products.xml",[
    }
  }
 #:: clone Professional / Enterprise to work around MCT quirks when host OS is ProEdu / ProWS / EnterpriseS / Embedded
- $clone = 'Embedded','IoTEnterpriseS','EnterpriseS'; $cloneN = 'EnterpriseSN'
- if ($ver -le 16299) {$clone +='ProfessionalEducation','ProfessionalWorkstation'};   if ($ver -le 10586) {$clone +='Enterprise'}
- if ($ver -le 16299) {$cloneN+='ProfessionalEducationN','ProfessionalWorkstationN'}; if ($ver -le 10586) {$cloneN+='EnterpriseN'}
+ $source = 'Enterprise'; $sourceN = 'EnterpriseN'; $clone = 'Embedded','IoTEnterpriseS','EnterpriseS'; $cloneN = 'EnterpriseSN'
+ if ($ver -le 10586) {$source = 'Professional'; $sourceN = 'ProfessionalN'; $clone +='Enterprise'; $cloneN+='EnterpriseN'}
+ if ($ver -le 16299) {$clone +='ProfessionalEducation','ProfessionalWorkstation'}
+ if ($ver -le 16299) {$cloneN+='ProfessionalEducationN','ProfessionalWorkstationN'}
  if ($env:UNHIDE_BUSINESS -ge 1) {
    $root.Files.File | & { process {
-     if ($_.Edition -eq "Enterprise") {
+     if ($_.Edition -eq $source) {
        foreach ($s in $clone) {
          $c = $_.Clone(); if ($c.HasAttribute('id')) {$c.RemoveAttribute('id')}
          $c.IsRetailOnly='False'; $c.Edition=$s; $root.Files.AppendChild($c) >''
        }
      }
-     elseif ($_.Edition -eq "EnterpriseN") {
+     elseif ($_.Edition -eq $sourceN) {
        foreach ($s in $cloneN) {
          $c = $_.Clone(); if ($c.HasAttribute('id')) {$c.RemoveAttribute('id')}
          $c.IsRetailOnly='False'; $c.Edition=$s; $root.Files.AppendChild($c) >''
