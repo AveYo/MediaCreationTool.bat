@@ -2,8 +2,8 @@
 :Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 21H2!
 :: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
 :: Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
-:: Changelog: 2021.12.15
-:: - fix regression with 1507-1709 not getting the correct fallback esd; fix dev '-noe' not autoclosing script    
+:: Changelog: 2021.12.22
+:: - improved auto.cmd handling of mismatched OS and target edition, obey 'def', 'auto' upgrades 7 to 10, not 11
 :: - skip 11 checks only via auto.cmd - ignore server label, please; local acc on 11 Home; output to CD or C:\ESD
 :: 11: 22000.318 / 21H2: 19044.1288 / 21H1: 19043.1348 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
@@ -51,7 +51,7 @@ set VERSIONS=1507,1511,1607,1703,1709,1803,1809,1903,1909,20H1,20H2,21H1,21H2,11
 set /a dV=14
 
 ::# MCT Preset choice dialog items and default-index [Select in MCT]
-set PRESETS=^&Auto Upgrade,Make ^&ISO,Make ^&USB,^&Select,MCT ^&Defaults
+set PRESETS=^&Auto Upgrade,Auto ^&ISO,Auto ^&USB,^&Select,MCT ^&Defaults
 set /a dP=4
 
 :begin
@@ -70,7 +70,7 @@ if defined MCT if not defined VID set "MCT="
 
 ::# parse AUTO from script name or commandline - starts unattended upgrade / in-place repair / cross-edition
 for %%s in (%~n0 %*) do if /i %%s equ auto set /a AUTO=1
-if defined AUTO set /a PRE=1 & if not defined MCT set /a MCT=%dV%
+if defined AUTO set /a PRE=1 & if not defined MCT set /a MCT=%dV% & if %OS_VERSION%0 lss 102400 set /a MCT=13
 
 ::# parse ISO from script name or commandline - starts media creation with selection
 for %%s in (%~n0 %*) do if /i %%s equ iso set /a ISO=1
@@ -125,14 +125,14 @@ if defined PRE if defined MCT goto choice-%MCT%
 %<%:f0 " Detected Media "%>>% & if defined MCT %<%:5f " %VID% "%>>%
 %<%:6f " %MEDIA_LANGCODE% "%>>%  &  %<%:9f " %MEDIA_EDITION% "%>>%  &  %<%:2f " %MEDIA_ARCH% "%>%
 echo;   
-%<%:1f "1  Auto Upgrade  : MCT gets Detected Media, script assists setupprep for upgrading "%>%
-%<%:1f "2    Make ISO    : MCT gets Detected Media, script assists making ISO in Downloads "%>%
-%<%:1f "3    Make USB    : MCT gets Detected Media, script assists making USB stick target "%>%
+%<%:1f "1  Auto Upgrade  : MCT gets detected media, script assists setupprep for upgrading "%>%
+%<%:1f "2    Auto ISO    : MCT gets detected media, script assists making ISO here | C:ESD "%>%
+%<%:1f "3    Auto USB    : MCT gets detected media, script assists making USB stick target "%>%
 %<%:1f "4     Select     : MCT gets selected Edition, Language, Arch onto specified target "%>%
-%<%:1f "5  MCT Defaults  : MCT runs unassisted making Selected Media without any overrides "%>%
-echo;
-%<%:17 "1-4 adds to media: PID.txt, $OEM$ dir, unattend.xml, auto.cmd with setup overrides "%>%
-%<%:17 "                                                               disable via DEF arg "%>%
+%<%:1f "5  MCT Defaults  : MCT runs unassisted, creating media without script modification "%>%
+echo;                                          
+%<%:17 "1-4 adds to media: PID.txt, EI.cfg, $OEM$ dir, auto.cmd for upgrade and tpm checks "%>%
+%<%:17 "can rename script: "%>>% & %<%:1f "def MediaCreationTool.bat"%>>% & %<%:17 " to always create unmodified MCT media "%>%
 
 ::# show more responsive MCT + PRE pseudo-menu dialog or separate choice dialog instances if either MCT or PRE are set
 if "%MCT%%PRE%"=="" call :choices2 MCT "%VERSIONS%" %dV% "MCT Version" PRE "%PRESETS%" %dP% "MCT Preset" 11 white 0x005a9e 320
@@ -282,8 +282,8 @@ goto Universal MCT
 
 :process
 if %PRE% equ 1 (set "PRESET=Auto Upgrade")
-if %PRE% equ 2 (set "PRESET=Make ISO")
-if %PRE% equ 3 (set "PRESET=Make USB")
+if %PRE% equ 2 (set "PRESET=Auto ISO")
+if %PRE% equ 3 (set "PRESET=Auto USB")
 if %PRE% equ 4 (set "PRESET=Select"       & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
 if %PRE% equ 5 (set "PRESET=MCT Defaults" & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
 if %PRE% equ 5 (goto noelevate) else set set=%MCT%.%PRE%
@@ -310,8 +310,6 @@ if %VER% leq 10586 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 15063 if %INSERT_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 10586 if %UNHIDE_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Education=Professional%)
 if %VER% neq 15063 (set MEDIA_EDITION=%MEDIA_EDITION:Cloud=Professional%)
-if "%MEDIA_EDITION%" neq "%OS_EDITION%" set "REG_EDITION=%MEDIA_EDITION%"
-if defined EDITION (set EDITION=%MEDIA_EDITION%)  
 
 ::# generic key preset - only for staged editions in MCT install.esd - see sources\product.ini
 for %%s in (%MEDIA_EDITION%) do for %%K in (
@@ -326,6 +324,8 @@ for %%s in (%MEDIA_EDITION%) do for %%K in (
 ) do if /i %%~xK equ .%%s set MEDIA_EDITION=%%~xK& call set MEDIA_EDITION=%%MEDIA_EDITION:.=%%& set "MEDIA_KEY=%%~nK"
 
 ::# detected / selected media preset
+if defined EDITION (set EDITION=%MEDIA_EDITION%)  
+if "%MEDIA_EDITION%" neq "%OS_EDITION%" (set REG_EDITION=%MEDIA_EDITION%) else set (REG_EDITION=)
 set "CONSUMER=%MEDIA_EDITION:Enterprise=%"
 if "%CONSUMER%" equ "%MEDIA_EDITION%" (set CFG=Consumer) else (set CFG=Business)
 if not defined EDITION (set UNSTAGED=1& set STAGED=) else (set UNSTAGED=& set STAGED=%MEDIA_EDITION%)
@@ -373,8 +373,9 @@ if "MCT Defaults" equ "%PRESET%" (start MediaCreationTool%VID%.exe /Selfhost& ex
 
 ::#  OR run script-assisted presets for auto upgrade without prompts / create iso directly / create usb
 ::# ====================================================================================================
+if defined EDITION (set EDITION_SWITCH=%EDITION%) else (set EDITION_SWITCH=)
 if not defined MEDIA (set LANGCODE=%MEDIA_LANGCODE%& set EDITION=%MEDIA_EDITION%& set ARCH=%MEDIA_ARCH%)
-if defined UNSTAGED (set KEY=) else if defined KEY set AKEY=/Pkey %KEY%
+if defined UNSTAGED (set KEY=)
 
 ::# not using /MediaEdition option in MCT version 1703 and older - handled via CurrentVersion registry workaround
 if %VER% gtr 15063 (set MEDIA_SEL=/MediaLangCode %LANGCODE% /MediaEdition %EDITION% /MediaArch %ARCH%) else (set MEDIA_SEL=)
@@ -382,7 +383,7 @@ if "Select" equ "%PRESET%" (set MEDIA_SEL=)
 
 ::# separate options for MCT and auto.cmd
 set MOPTIONS=/Action CreateMedia %MEDIA_SEL% /Pkey Defer %OPTIONS% /SkipSummary /Eula Accept
-set AOPTIONS=/Auto Upgrade /MigChoice Upgrade %AKEY% %OPTIONS% /SkipSummary /Eula Accept
+set AOPTIONS=/Auto Upgrade /MigChoice Upgrade %OPTIONS% /SkipSummary /Eula Accept
 set MAKE_OPTIONS=/SelfHost& for %%s in (%MOPTIONS%) do call set MAKE_OPTIONS=%%MAKE_OPTIONS%% %%s 
 set AUTO_OPTIONS=/SelfHost& for %%s in (%AOPTIONS%) do call set AUTO_OPTIONS=%%AUTO_OPTIONS%% %%s
 
@@ -401,8 +402,12 @@ set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]g
 ::# gets placed inside boot.wim so that it does not affect setup under windows  
 set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_AutoUnattend_xml')[1];"
 
+::# cleanup stale files
+dism /cleanup-wim >nul 2>nul
+
 ::# start script-assisted MCT via powershell (to monitor setup state and take necessary action)
 set "0=%~f0"& start "MCT" /wait /b powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
+if "Auto Upgrade" neq "%PRESET%" pause 
 
 ::--------------------------------------------------------------------------------------------------------------------------------
 EXIT /BATCH DONE
@@ -443,7 +448,7 @@ EXIT /BATCH DONE
  $bt = "Button","ComboBox","Edit" |% {new-object Windows.Automation.PropertyCondition($cp, $_)}
  new-item -path function: -name "Enter" -value { $app = get-process "SetupHost" -ea 0; if ($null -ne $app)
  { [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)} ; [Windows.Forms.SendKeys]::SendWait("{ENTER}") } >'' 
- $id = 0; if ('Make USB' -ne $env:PRESET) {$id = 1}
+ $id = 0; if ('Auto USB' -ne $env:PRESET) {$id = 1}
  $sw = "ShowWindowAsync"; $dm = [AppDomain]::CurrentDomain."DefineDynami`cAssembly"(1,1)."DefineDynami`cModule"(1)
  $dt = $dm."Defin`eType"("AveYo",1179913,[ValueType]); $ptr = (get-process -pid $PID).MainWindowHandle.gettype() 
  $dt."DefinePInvok`eMethod"($sw,"user`32",8214,1,[void],@($ptr,[int]),1,4) >''; $nt = $dt."Creat`eType"()
@@ -464,7 +469,7 @@ EXIT /BATCH DONE
      if ($env:VER -le 15063) {while ($win.FindAll(5,$bt[1]).Count -lt 3) {if ($mct.HasExited) {break :mct}; sleep -m 200}; Enter}
      while ($win.FindAll(5,$bt[0]).Count -le $nr) {if ($mct.HasExited) {break :mct}; sleep -m 200}; $all = $win.FindAll(5,$bt[0]) 
      $all[$id].GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern).Select();$all[$all.Count-1].SetFocus(); Enter
-     if ('Make USB' -ne $env:PRESET) {
+     if ('Auto USB' -ne $env:PRESET) {
        while ($win.FindAll(5,$bt[2]).Count -le 0) {if ($mct.HasExited) {break :mct};sleep -m 50}; $val = $win.FindAll(5,$bt[2])[0]
        $val.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($ISO); $all = $win.FindAll(5, $bt[0])
        ($all |? {$_.Current.AutomationId -eq 1}).SetFocus(); Enter # sendkeys Enter - due to unreliable InvokePattern click()
@@ -472,7 +477,7 @@ EXIT /BATCH DONE
    } catch {} }
   
   #:: if DEF parameter used, quit without adding $OEM$, pid.txt, auto.cmd (includes 11 Setup override) to media
-   if ($null -ne $env:DEF -and 'Auto Upgrade' -ne $env:PRESET) {break} 
+   if ($null -ne $env:DEF -and 'Auto Upgrade' -ne $env:PRESET) {break :mct} 
 
   #:: get target $ISO or $USB from setup state file
    $ready = $false; $task = "PreDownload"; $action = "GetWebSetupUserInput"
@@ -505,9 +510,6 @@ EXIT /BATCH DONE
      $f3 = "MCT\PID.txt"; if (test-path $f3) {copy -path $f3 -dest $P -force >''; write-host -fore Gray AddFile $f3}
      $f4 = "MCT\auto.cmd"; if (test-path $f4) {copy -path $f4 -dest $DIR -force >''; write-host -fore Gray AddFile $f4}
    } ; popd
-  
-  #:: done if not 11 or auto upgrade preset
-   if ($env:VER -lt 22000 -and 'Auto Upgrade' -ne $env:PRESET) {break :mct}
    
   #:: watch media layout progress
    $ready = $false; $task = "MediaCreate"; $action = "IsoLayout"; if ($null -ne $USB) {$action = "UsbLayout"}
@@ -534,12 +536,11 @@ EXIT /BATCH DONE
      write-host -fore Gray "Created", $action
    }
   
-  #:: done if not 11
-   if ($env:VER -lt 22000) {break :mct}
-
-  #:: kill MCT process before temporary iso is finalized   
-   $mct.Kill(); $set = get-process SetupHost -ea 0; if ($set) {$set.Kill()}
-   sleep 3; dism /cleanup-wim >''; del $ISO -force -ea 0 >'' 
+  #:: kill MCT process before temporary iso finish
+   if ($env:VER -ge 22000 -or 'Auto Upgrade' -eq $env:PRESET) {
+     $mct.Kill(); $s = get-process SetupPrep,SetupHost -ea 0; if ($s) { foreach ($setup in $s) {$setup.Kill()} } 
+     sleep 3; start -nonew cmd '/d/x/r dism /cleanup-wim >nul 2>nul'; del $ISO -force -ea 0 >''
+   } 
 
   #:: end monitoring 
    break :mct
@@ -551,11 +552,11 @@ EXIT /BATCH DONE
    start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:32 /f & reg add $K /v ProductName /d $P /reg:32 /f) >nul 2>nul"
    start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:64 /f & reg add $K /v ProductName /d $P /reg:64 /f) >nul 2>nul"
  }
-
+ 
 #:: Auto Upgrade preset starts auto.cmd from $DIR = C:\$WINDOWS.~WS\Sources\Windows 
  if ('Auto Upgrade' -eq $env:PRESET) {
    cd -Lit("$env:ROOT\MCT"); start -nonew cmd "/d/x/r call auto.cmd $DIR"
-   write-host "`r`n UPGRADING ... `r`n"; sleep 7; return
+   write-host "`r`n UPGRADING $env:EDITION_SWITCH... `r`n"; sleep 7; return
  } 
 
 #:: skip windows 11 upgrade checks - for running setup from boot media
@@ -593,9 +594,8 @@ EXIT /BATCH DONE
 ::--------------------------------------------------------------------------------------------------------------------------------
 
 :generate_auto_cmd $text = @"
-<!-- : Auto Upgrade without prompts + change edition support
-@title Auto Upgrade & set root=%1& set cfg=%2& echo off 
-set OPTIONS=$env:AUTO_OPTIONS`r`n`r`n
+@echo off& set root=%1& set title= Auto Upgrade with edition switch support `r`nset "EDITION_SWITCH=$env:EDITION_SWITCH"
+set "SKIP_11_SETUP_CHECKS=$((0,1)[$null -eq $env:DEF])"`r`nset OPTIONS=$env:AUTO_OPTIONS`r`n`r`n
 "@ + @'
 pushd "%~dp0"& if defined root pushd %root% 
 for %%i in ("x86\" "x64\" "") do if exist "%%~isources\setupprep.exe" set "dir=%%~i"
@@ -608,82 +608,78 @@ reg query "HKLM\Software\Microsoft\Windows NT\CurrentVersion\WinPE">nul 2>nul &&
 ::# elevate so that workarounds can be set under windows
 fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/r call $env:_\"& exit /b)
 
+::# undo any previous regedit edition rename (if upgrade was interrupted)
+set EI=& set PN=& set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"  
+for /f "tokens=2*" %%R in ('reg query %NT% /v EditionID_undo /reg:64 2^>nul') do set "EI=%%S"
+for /f "tokens=2*" %%R in ('reg query %NT% /v ProductName_undo /reg:64 2^>nul') do set "PN=%%S"
+for %%a in (32 64) do (
+ if defined EI reg add %NT% /v EditionID /d "%EI%" /f /reg:%%a   & reg delete %NT% /v EditionID_undo /f /reg:%%a
+ if defined PN reg add %NT% /v ProductName /d "%EI%" /f /reg:%%a & reg delete %NT% /v ProductName_undo /f /reg:%%a
+) >nul 2>nul
+
 ::# get current version
-set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"                       
+set EditionID=& set ProductName=& set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"                       
 for /f "tokens=2*" %%R in ('reg query %NT% /v EditionID /reg:64 2^>nul') do set "EditionID=%%S"
 for /f "tokens=2*" %%R in ('reg query %NT% /v ProductName /reg:64 2^>nul') do set "ProductName=%%S"
 for /f "tokens=2*" %%R in ('reg query %NT% /v CurrentBuildNumber /reg:64 2^>nul') do set "CurrentBuild=%%S"
 for /f "tokens=2-3 delims=[." %%i in ('ver') do for %%s in (%%i) do set /a Version=%%s*10+%%j
 
-::# group editions by image
-set e10=CloudN & set e11=Cloud & set e12=CoreCountrySpecific & set e13=CoreSingleLanguage 
-set e14=StarterN HomeBasicN HomePremiumN CoreConnectedN CoreN 
-set e15=Starter  HomeBasic  HomePremium  CoreConnectedCountrySpecific CoreConnectedSingleLanguage CoreConnected Core
-set e16=UltimateN ProfessionalStudentN
-set e17=Ultimate  ProfessionalStudent  ProfessionalCountrySpecific ProfessionalSingleLanguage
-set e18=ProfessionalEducationN ProfessionalWorkstationN ProfessionalN
-set e19=ProfessionalEducation  ProfessionalWorkstation  Professional
-set e20=EducationN & set e21=Education & set e22=EnterpriseN & set e23=IoTEnterprise Enterprise
-set e24=EnterpriseGN EnterpriseSN & set e25=EnterpriseG  EnterpriseS  IoTEnterpriseS Embedded
-
-::# get available images via wim_info snippet
-for /l %%i in (10,1,25) do set _%%i=& for %%U in (!e%%i!) do (set _%%U=)
+::# WIM_INFO w_5=wim_5th b_5=build_5th p_5=patch_5th a_5=arch_5th l_5=lang_5th e_5=edi_5th d_5=desc_5th i_5=edi_5th i_Core=index
 set "0=%~f0"& set wim=& set ext=.esd& if exist install.wim (set ext=.wim) else if exist install.swm set ext=.swm
-set "wim_info=iex ([io.file]::ReadAllText($env:0)-split'#[:]wim_info')[1]; WIM_INFO install%ext%"  
-for /f "tokens=1-6 delims=," %%i in ('powershell -nop -c "%wim_info% 0"') do (
-  set _%%m=%%i& set _%%i=%%m& set b_%%i=%%j& set count=%%i& set wim=!wim! %%m
-  for /f "tokens=1 delims=." %%K in ("%%j") do (set Build%%i=%%K)
-)
-echo;Windows images:%wim%
+set snippet=powershell -nop -c iex ([io.file]::ReadAllText($env:0)-split'#[:]wim_info[:]')[1]; WIM_INFO install%ext% 0 0  
+set w_count=0& for /f "tokens=1-7 delims=," %%i in ('"%snippet%"') do (set w_%%i=%%i,%%j,%%k,%%l,%%m,%%n,%%o& set /a w_count+=1
+set b_%%i=%%j& set p_%%i=%%k& set a_%%i=%%l& set l_%%i=%%m& set e_%%i=%%n& set d_%%i=%%o& set i_%%n=%%i& set i_%%i=%%n)
 
-::# get preset edition in EI.cfg or PID.txt
-set Name=& set EI=& set "cfg_filter=EditionID Channel OEM Retail Volume _Default VL 0 1 ^$"
-if exist EI.cfg for /f "tokens=*" %%i in ('findstr /v /i /r "%cfg_filter%" EI.cfg') do set "EI=%%i"
+::# print available editions in install.esd via wim_info snippet
+echo;------------------------------------------------------------------------------------
+for /l %%i in (1,1,%w_count%) do call echo;%%w_%%i%%
+echo;------------------------------------------------------------------------------------
+
+::# get requested edition in EI.cfg or PID.txt or OPTIONS
+if exist product.ini for /f "tokens=1,2 delims==" %%O in (product.ini) do if not "%%P" equ "" (set pid_%%O=%%P& set pn_%%P=%%O)
+set EI=& set Name=& set nID=& set reg=& set "cfg_filter=EditionID Channel OEM Retail Volume _Default VL 0 1 ^$"
+if exist EI.cfg for /f "tokens=*" %%i in ('findstr /v /i /r "%cfg_filter%" EI.cfg') do (set EI=%%i& set nID=%%i)
 if exist PID.txt for /f "delims=;" %%i in (PID.txt) do set %%i 2>nul
-if exist product.ini for /f "tokens=1,2 delims==" %%s in (product.ini) do if not "%%P" equ "" (set pid_%%s=%%P& set %%P=%%s)
-if defined Value if not defined Name call set "Name=%%%Value%%%"
-set oID=%EditionID%& set nID=%EI%& if defined Name (set nID=%Name%)
-if not defined nID (if defined cfg (set nID=%cfg%) else set nID=%oID%)
-echo;Edition preset: %nID%
+if not defined Value for %%s in (%OPTIONS%) do if defined pn_%%s (set Name=!pn_%%s!& set Name=!Name:gvlk=!)
+if defined Value if not defined Name for %%s in (%Value%) do (set Name=!pn_%%s!& set Name=!Name:gvlk=!)
+if defined EDITION_SWITCH (set nID=%EDITION_SWITCH%) else if defined Name for %%s in (%Name%) do (set nID=%Name%)
+if not defined nID set nID=%EditionID%& if not defined EditionID set nID=Professional& set EditionID=Professional
+if /i "%EditionID%" equ "%nID%" (set changed=) else set changed=1
 
-::# get upgrade matrix
-set index=& set change=& set new=0
-for /l %%i in (10,1,25) do for %%U in (!e%%i!) do (
-  (if %nID% equ %%U set new=%%i) & (if %oID% equ %%U set old=%%i) & (if defined _%%U set _%%i=!_%%U!)
-)
-if %new% equ 10 set .= Cloud N     & for %%i in (22 12 13 14 20 18 10) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 11 set .= Cloud       & for %%i in (23 12 13 15 21 19 11) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 12 set .= HomeCountry & for %%i in (10 22 13 14 20 18 12) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 13 set .= HomeSingle  & for %%i in (10 22 13 14 20 18 13) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 14 set .= Home N      & for %%i in (10 12 13 22 20 18 14) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if %new% equ 15 set .= Home        & for %%i in (11 12 13 23 21 19 15) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if %new% equ 16 set .= Ultimate N  & for %%i in (10 12 13 14 20 18 16) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if %new% equ 17 set .= Ultimate    & for %%i in (11 12 13 15 21 19 17) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if %new% equ 18 set .= Pro N       & for %%i in (10 12 13 14 20 22 18) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 19 set .= Pro         & for %%i in (11 12 13 15 21 23 19) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 20 set .= Edu N       & for %%i in (10 12 13 14 22 18 20) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 21 set .= Edu         & for %%i in (11 12 13 15 23 19 21) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 22 set .= Ent N       & for %%i in (10 12 13 14 20 18 22) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 23 set .= Ent         & for %%i in (11 12 13 15 21 19 23) do if defined _%%i (set index=!_%%i!& set change=)
-if %new% equ 24 set .= other N     & for %%i in (10 12 13 14 20 18 22) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if %new% equ 25 set .= other       & for %%i in (11 12 13 15 21 19 23) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if not defined index for %%i in (15 19 21) do if defined _%%i (set index=!_%%i!& set change=%%i)
-if defined index set OPTIONS=%OPTIONS% /ImageIndex %index%  
-if defined change for %%i in (!e%change%!) do (set change=%%i)& rem if defined pid_%%i set OPTIONS=%OPTIONS% /pkey !pid_%%i! 
-echo;Edition change: %change%
-echo;Selected index: %index%
+::# upgrade matrix to automatically fallback to an edition that would keep files and apps
+set HOME=Starter HomeBasic HomePremium CoreConnectedCountrySpecific CoreConnectedSingleLanguage CoreConnected Core
+set HOME_N=StarterN HomeBasicN HomePremiumN CoreConnectedN CoreN & set HOME_S=CoreSingleLanguage CoreCountrySpecific
+set ULT=Ultimate ProfessionalStudent ProfessionalCountrySpecific ProfessionalSingleLanguage& set CLOUD=Cloud
+set ULT_N=UltimateN ProfessionalStudentN& set CLOUD_N=CloudN
+set EDU=Education& set ENT=Enterprise& set LTS=EnterpriseG EnterpriseS IoTEnterpriseS Embedded& set IOT=IoTEnterprise
+set EDU_N=EducationN& set ENT_N=EnterpriseN& set LTS_N=EnterpriseGN EnterpriseSN
+set PRO=ProfessionalEducation ProfessionalWorkstation Professional& set MIX=%ENT% %EDU% !PRO! %CLOUD%
+set PRO_N=ProfessionalEducationN ProfessionalWorkstationN ProfessionalN& set MIX_N=%ENT_N% %EDU_N% !PRO_N! %CLOUD_N%
+for %%C in (%LTS_N%)  do if /i %%C equ %nID% (set nID=EnterpriseN)
+for %%C in (%LTS%)    do if /i %%C equ %nID% (set nID=Enterprise)
+for %%C in (%ULT_N%)  do if /i %%C equ %nID% (set nID=ProfessionalN)
+for %%C in (%ULT%)    do if /i %%C equ %nID% (set nID=Professional)
+for %%C in (%MIX_N%)  do if /i %%C equ %nID% (set nID=ProfessionalN& set reg=%%C& if defined i_%%C set nID=%%C)
+for %%C in (%MIX%)    do if /i %%C equ %nID% (set nID=Professional&  set reg=%%C& if defined i_%%C set nID=%%C)
+for %%C in (%HOME_N%) do if /i %%C equ %nID% (set nID=CoreN& set reg=CoreN& if not defined i_CoreN set nID=ProfessionalN)
+for %%C in (%HOME%)   do if /i %%C equ %nID% (set nID=Core&  set reg=Core&  if not defined i_Core  set nID=Professional)
+for %%C in (%HOME_S%) do if /i %%C equ %nID% (set nID=Core& set reg=%%C& if defined i_%%C set nID=%%C)
+for %%C in (%IOT%)    do if /i %%C equ %nID% (set nID=Enterprise& set reg=%%C)
+set index=& for /l %%i in (1,1,%w_count%) do if /i !i_%%i! equ !nID! (set nID=!i_%%i!& set index=%%i)
+if not defined index set index=1& set nID=!i_1!& if defined i_Professional set index=!i_Professional!& set nID=Professional
+set Build=!b_%index%!& set OPTIONS=%OPTIONS% /ImageIndex %index%& if defined changed if not defined reg (set reg=!nID!)
+echo;Current edition: %EditionID% & echo;Regedit edition: %reg% & echo;Index: %index%  Image: %nID%
+timeout /t 10
 
 ::# prevent usage of MCT for intermediary upgrade in Dynamic Update (causing 7 to 19H1 instead of 7 to 21H2 for example) 
-if "%Build1%" gtr "15063" (set OPTIONS=%OPTIONS% /UpdateMedia Decline)
+if "%Build%" gtr "15063" (set OPTIONS=%OPTIONS% /UpdateMedia Decline)
 
 ::# skip windows 11 upgrade checks via launch option trick - this way, can still run setup.exe directly to not skip checks
-if "%Build1%" geq "22000" (set OPTIONS=/Product Server %OPTIONS%)
+if "%Build%" geq "22000" if "%SKIP_11_SETUP_CHECKS%" equ "1" (set OPTIONS=/Product Server %OPTIONS%)
 
 ::# auto upgrade with edition lie workaround to keep files and apps - all 1904x builds allow up/downgrade between them
-if defined change call :rename %change%
-
+if defined reg call :rename %reg%
 start "auto" setupprep.exe %OPTIONS%
-timeout /t 7
 exit /b
 
 :rename EditionID
@@ -696,42 +692,34 @@ set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
  reg add   %NT% /v EditionID /d "%~1" /f /reg:64 &  reg add %NT% /v ProductName      /d "%~1"           /f /reg:64
 ) >nul 2>nul &exit /b
 
-#:wim_info # 
-function WIM_INFO ($file = 'install.esd', $index = 0, $output = 0) { :info while ($true) {
-  #:: Quick ISO ESD WIM info by AveYo v1
-  #:: args = file, image index or 0 for all, output 0 for simple, 1 for xml text, 2 for xml object
-  #:: by default returns simple image index, version, arch, lang, edition - example: 6,19041.631,x64,en-US,Professional
-  $block = 2097152; $bytes = new-object "Byte[]" ($block); $begin = [uint64]0; $final = [uint64]0; $limit = [uint64]0
-  $steps = [int]([uint64]([IO.FileInfo]$file).Length / $block - 1); $encoding = [Text.Encoding]::GetEncoding(28591)
-  $find1 = $encoding.GetString([Text.Encoding]::Unicode.GetBytes("</INSTALLATIONTYPE>"))
-  $find2 = $encoding.GetString([Text.Encoding]::Unicode.GetBytes("</WIM>"))
+#:WIM_INFO:# [PARAMS]: "file" [optional]Index or 0 = all  Output 0 = txt 1 = xml 2 = file.txt 3 = file.xml 4 = xml object
+set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#[:]WIM_INFO[:]' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
+set ^ #=& set "0=%~f0"& set 1=;WIM_INFO %*& powershell -nop -c "%#%"& exit /b %errorcode%
+function WIM_INFO ($file = 'install.esd', $index = 0, $out = 0) { :info while ($true) {
+  $block = 2097152; $bytes = new-object 'Byte[]' ($block); $begin = [uint64]0; $final = [uint64]0; $limit = [uint64]0
+  $steps = [int]([uint64]([IO.FileInfo]$file).Length / $block - 1); $enc = [Text.Encoding]::GetEncoding(28591); $delim = @()
+  foreach ($d in '/INSTALLATIONTYPE','/WIM') {$delim += $enc.GetString([Text.Encoding]::Unicode.GetBytes([char]60+ $d +[char]62))}
   $f = new-object IO.FileStream ($file, 3, 1, 1); $p = 0; $p = $f.Seek(0, 2)
   for ($o = 1; $o -le $steps; $o++) { 
     $p = $f.Seek(-$block, 1); $r = $f.Read($bytes, 0, $block); if ($r -ne $block) {write-host invalid block $r; break}
-    $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.LastIndexOf($find1, [StringComparison]::Ordinal) 
-    if ($t -ge 0) {
-      $f.Seek(($t -$block), 1) >''
-      for ($o = 1; $o -le $block; $o++) { $f.Seek(-2, 1) >''; if ($f.ReadByte() -eq 0xfe) {$begin = $f.Position; break} }
+    $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.LastIndexOf($delim[0], [StringComparison]::Ordinal) 
+    if ($t -lt 0) { $p = $f.Seek(-$block, 1)} else { [void]$f.Seek(($t -$block), 1)
+      for ($o = 1; $o -le $block; $o++) { [void]$f.Seek(-2, 1); if ($f.ReadByte() -eq 0xfe) {$begin = $f.Position; break} }
       $limit = $f.Length - $begin; if ($limit -lt $block) {$x = $limit} else {$x = $block}
-      $bytes = new-object "Byte[]" ($x); $r = $f.Read($bytes, 0, $x); 
-      $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.IndexOf($find2, [StringComparison]::Ordinal)
-      if ($t -ge 0) {$f.Seek(($t + 12 -$x), 1) >''; $final = $f.Position} ; break
-    } else { $p = $f.Seek(-$block, 1)} 
-  }
+      $bytes = new-object 'Byte[]' ($x); $r = $f.Read($bytes, 0, $x) 
+      $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.IndexOf($delim[1], [StringComparison]::Ordinal)
+      if ($t -ge 0) {[void]$f.Seek(($t + 12 -$x), 1); $final = $f.Position} ; break } }
   if ($begin -gt 0 -and $final -gt $begin) {
-    $x = $final - $begin; $f.Seek(-$x, 1) >''; $bytes = new-object "Byte[]" ($x); $r = $f.Read($bytes, 0, $x)
-    if ($r -ne $x) {break}
-    [xml]$xml = [Text.Encoding]::Unicode.GetString($bytes); $f.Dispose()
-  } else {$f.Dispose()}
-  break :info } 
-  if ($output -eq 0) {$simple = ""; foreach ($i in $xml.WIM.IMAGE) { if ($index -gt 0 -and $($i.INDEX) -ne $index) {continue}
-    $simple += "$($i.INDEX),$($I.WINDOWS.VERSION.BUILD).$($I.WINDOWS.VERSION.SPBUILD),"
-    $simple += "$(('x64','x86')[$I.WINDOWS.ARCH-eq'0']),$($I.WINDOWS.LANGUAGES.LANGUAGE),$($I.WINDOWS.EDITIONID)`r`n"
-  } ; return $simple }
-  if ($output -eq 1) {[console]::OutputEncoding=[Text.Encoding]::UTF8; $xml.Save([Console]::Out); ""} 
-  if ($output -eq 2) {return $xml}
-}
-#:: done #:wim_info
+    $x = $final - $begin; [void]$f.Seek(-$x, 1); $bytes = new-object 'Byte[]' ($x); $r = $f.Read($bytes, 0, $x)
+    if ($r -ne $x) {$f.Dispose(); break} else {[xml]$xml = [Text.Encoding]::Unicode.GetString($bytes); $f.Dispose()}
+  } else {$f.Dispose()} ; break :info }
+  if ($out -eq 1) {[console]::OutputEncoding=[Text.Encoding]::UTF8; $xml.Save([Console]::Out); ''; return} 
+  if ($out -eq 3) {try{$xml.Save(($file-replace'esd$','xml'))}catch{}; return}; if ($out -eq 4) {return $xml}
+  $txt = ''; foreach ($i in $xml.WIM.IMAGE) {if ($index -gt 0 -and $($i.INDEX) -ne $index) {continue}; [int]$a='1'+$i.WINDOWS.ARCH
+  $txt+= $i.INDEX+','+$i.WINDOWS.VERSION.BUILD+','+$i.WINDOWS.VERSION.SPBUILD+','+$(@{10='x86';15='arm';19='x64';112='arm64'}[$a])
+  $txt+= ','+$i.WINDOWS.LANGUAGES.LANGUAGE+','+$i.WINDOWS.EDITIONID+','+$i.NAME+[char]13+[char]10}; $txt=$txt-replace',(?=,)',', '
+  if ($out -eq 2) {try{[io.file]::WriteAllText(($file-replace'esd$','txt'),$txt)}catch{}; return}; if ($out -eq 0) {return $txt}
+} #:WIM_INFO:# Quick WIM SWM ESD ISO info v2 - lean and mean snippet by AveYo, 2021
 
 '@; [io.file]::WriteAllText('auto.cmd', $text) #:generate_auto_cmd
 ::--------------------------------------------------------------------------------------------------------------------------------
@@ -747,10 +735,10 @@ function WIM_INFO ($file = 'install.esd', $index = 0, $output = 0) { :info while
     xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     publicKeyToken="31bf3856ad364e35" versionScope="nonSxS">
   <OOBE><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideLocalAccountScreen>false</HideLocalAccountScreen>
-  <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>3</ProtectYourPC></OOBE></component></settings>
+  <HideWirelessSetupInOOBE>false</HideWirelessSetupInOOBE><ProtectYourPC>3</ProtectYourPC></OOBE></component></settings>
 </unattend>
 
-'@; [io.file]::WriteAllText('AutoUnattend.xml', $text); #:generate_AutoUnattend_xml
+'@; [io.file]::WriteAllText('AutoUnattend.xml', $text); #:generate_AutoUnattend_xml - to be used via boot.wim 
 ::--------------------------------------------------------------------------------------------------------------------------------
 
 :reg_query [USAGE] call :reg_query "HKCU\Volatile Environment" Value variable
