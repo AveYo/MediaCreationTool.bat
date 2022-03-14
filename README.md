@@ -55,10 +55,6 @@ Also sets recommended setup options with least amount of issues on upgrades
 > Can even add a VL / MAK / retail product key in the same way to take care of licensing differences.  
 > The script also picks up any `$OEM$` folder in the current location - for unified branding, configuration, tweaks etc.  
 
-Windows 10  
-----------  
-[MediaCreationTool.bat](MediaCreationTool.bat) works smoothly, not having to deal with anti-consumer install checks..  
-
 
 Windows 11 and the TPM / SecureBoot / CPU / Storage setup checks  
 ----------------------------------------------------------------  
@@ -73,8 +69,8 @@ To NOT add bypass to the media, use ***MCT Defaults*** preset or rename the scri
 > *Just ignore the 'Windows Server' label, please!*  
 Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) acts globally and **will skip upgrade checks via setup.exe**  
 
-Get RP/BETA/DEV 11 via Windows Update on "unsupported" hardware  
----------------------------------------------------------------  
+Get 11 via Windows Update on "unsupported" hardware  
+---------------------------------------------------  
 Step 1: use [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) to automatically bypass setup requirements  
 _It's a set it and forget it script, with built-in undo - v7 using more reliable /Product Server trick_  
 
@@ -102,6 +98,11 @@ for consumer / core media you can add a generic `EI.cfg` to the media\sources yo
 
 Note that [Skip_TPM_Check_on_Dynamic_Update.cmd](bypass11/Skip_TPM_Check_on_Dynamic_Update.cmd) **will work for manual upgrade as well**  
 _regardless of mounted iso / usb media already having a bypass added or not_  
+
+If having update issues - on any windows version  
+------------------------------------------------  
+Use [windows_update_refresh.bat](bypass11/windows_update_refresh.bat)  
+_AveYo: as a bonus, it hides unsupported PC nags_  
 
 Changelog  
 ---------  

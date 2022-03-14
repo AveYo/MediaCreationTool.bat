@@ -296,7 +296,7 @@ fltmc>nul || (set _=start "MCT" cmd /d/x/r call "%~f0" %* %set%& powershell -nop
 mkdir "%ROOT%\MCT" >nul 2>nul & attrib -R -S -H %ROOT% /D & pushd "%ROOT%\MCT"
 del /f /q products.* *.key EI.cfg PID.txt auto.cmd AutoUnattend.xml >nul 2>nul 
 set /a latest=0 & if exist latest set /p latest=<latest
-echo,20211207>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
+echo;20220314>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
 
 ::# edition fallback to ones that MCT supports - after selection
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
@@ -776,11 +776,13 @@ function DIR2ISO ($dir,$iso,$label='DVD_ROM') {if (!(test-path -Path $dir -patht
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:DOWNLOAD\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
 set ^ #=& set "0=%~f0"& set 1=;DOWNLOAD %*& powershell -nop -c "%#%"& exit /b %errorcode%
 function DOWNLOAD ($u, $f, $p = (get-location).Path) {
-  Import-Module BitsTransfer; $wc = new-object Net.WebClient; $wc.Headers.Add('user-agent','ipad') 
+  Import-Module BitsTransfer; $wc = new-object Net.WebClient; $wc.Headers.Add('user-agent','ipad'); $j = 2022 
   $file = join-path $p $f; $s = 'https://'; $i = 'http://'; $d = $u.replace($s,'').replace($i,''); $https = $s+$d; $http = $i+$d 
   foreach ($url in $http, $https) { 
-    if (([IO.FileInfo]$file).Exists) {return}; try {Start-BitsTransfer $url $file -ea 1} catch {}
-    if (([IO.FileInfo]$file).Exists) {return}; try {$wc.DownloadFile($url, $file)} catch {}
+    if (([IO.FileInfo]$file).Exists) {return}; try {Start-BitsTransfer $($url+'/?') $file -ea 1} catch {}
+    if (([IO.FileInfo]$file).Exists) {return}; try {bitsadmin /transfer ($j++) /download /priority FOREGROUND $url $file} catch {}
+    if (([IO.FileInfo]$file).Exists) {return}; try {$wc.DownloadFile($url+'/?', $file)} catch {}
+    if (([IO.FileInfo]$file).Exists) {return}; try {curl -so $file $url} catch {}
   }  
   if (([IO.FileInfo]$file).Exists) {return}; write-host -fore Yellow " $f download failed "
 } #:DOWNLOAD:# try download url via bits, net, and http/https - snippet by AveYo, 2021
