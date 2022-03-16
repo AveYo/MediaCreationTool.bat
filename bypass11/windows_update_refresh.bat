@@ -12,17 +12,18 @@ $_Paste_in_Powershell = {
     kill -name $_ -force -ea 0
   }
   cmd /c rd /s /q "%SystemDrive%\`$WINDOWS.~BT\Sources\Panther"
-  cmd /c rd /s /q "%SystemRoot%\system32\catroot2"
+  cmd /c rd /s /q "%SystemRoot%\system32\catroot2" # because kill $svc.PID ;)
   cmd /c rd /s /q "%SystemRoot%\SoftwareDistribution"
   cmd /c del /f /q "%SystemRoot%\Logs\WindowsUpdate\*"
-  cmd /c del /f /q "%ProgramData%\USOPrivate\UpdateStore\*"
+  cmd /c del /f /q "%ProgramData%\USOPrivate\UpdateStore\*" # clearing USO suggested by abbodi1406 @ MDL
   cmd /c del /s /f /q "%ProgramData%\USOShared\Logs\*"
   cmd /c rd /s /q "%ProgramFiles%\UNP"
   try { Get-WindowsUpdateLog -LogPath $env:temp\temp.log -ForceFlush -Confirm:$False -ea 0 } catch {}
-  <# AveYo: comment 3 lines below to NOT hide 11 unsupported/upgrade nag - 25H1 is NOT a typo #>
-  reg add "HKCU\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /d 0 /t reg_dword /f
+  <# AveYo: comment reg lines below to NOT hide 11 unsupported/upgrade nag #>
+  reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v "TargetReleaseVersionInfo" /d 25H1 /f # 25H1 NOT a typo ;)
   reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v "TargetReleaseVersion" /d 1 /t reg_dword /f
-  reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v "TargetReleaseVersionInfo" /d 25H1 /f
+  reg add "HKCU\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /d 0 /t reg_dword /f # hide desktop watermark
+  reg add "HKCU\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /d 0 /t reg_dword /f # suggested by awuctl @ MDL
   net1 start wuauserv; net1 start bits; net1 start usosvc
   UsoClient RefreshSettings
   sleep 5
