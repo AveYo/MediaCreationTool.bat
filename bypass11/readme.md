@@ -11,7 +11,7 @@ To NOT add bypass to the media, use ***MCT Defaults*** preset or rename the scri
 > *Just ignore the 'Windows Server' label, please!*  
 > NEWS: temporarily added back my old-style 0-byte bypass as it still works on release  
 
-i: [Skip_TPM_Check_on_Dynamic_Update.cmd](Skip_TPM_Check_on_Dynamic_Update.cmd) **now WU only, no longer acts globally!**  
+i: [Skip_TPM_Check_on_Dynamic_Update.cmd](Skip_TPM_Check_on_Dynamic_Update.cmd) **V8: WU only, no longer acts globally!**  
 
 Get 11 via Windows Update on "unsupported" hardware  
 ---------------------------------------------------  
