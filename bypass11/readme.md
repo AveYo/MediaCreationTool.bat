@@ -11,7 +11,7 @@ To NOT add bypass to the media, use ***MCT Defaults*** preset or rename the scri
 > *Just ignore the 'Windows Server' label, please!*  
 > NEWS: temporarily added back my old-style 0-byte bypass as it still works on release  
 
-i: [Skip_TPM_Check_on_Dynamic_Update.cmd](Skip_TPM_Check_on_Dynamic_Update.cmd) acts globally and **skips setup.exe upgrade checks as well**  
+i: [Skip_TPM_Check_on_Dynamic_Update.cmd](Skip_TPM_Check_on_Dynamic_Update.cmd) **now WU only, no longer acts globally!**  
 
 Get 11 via Windows Update on "unsupported" hardware  
 ---------------------------------------------------  
@@ -40,16 +40,13 @@ for consumer / core media you can add a generic `EI.cfg` to the media\sources yo
 > _gvlkprofessional=W269N-WFGWX-YVC9B-4J6C9-T83GX gvlkcore=TX9XD-98N7V-6WMQ6-BX7FG-H8Q99_  
 > _gvlkenterprise=NPPR9-FWDCX-D2C8J-H872K-2YT43 gvlkeducation=NW6C2-QMPVW-D7KKK-3GKT6-VCFB2 etc._  
 
-i: [Skip_TPM_Check_on_Dynamic_Update.cmd](Skip_TPM_Check_on_Dynamic_Update.cmd) acts globally and **skips setup.exe upgrade checks as well**  
-_regardless of mounted iso / usb media already having a bypass added or not_  
-
 Offline local account on 11 Home / Pro  
 --------------------------------------  
 [MediaCreationTool.bat](../MediaCreationTool.bat) creates media that re-enables the *I dont have internet* OOBE choice (OOBE\BypassNRO)  
 It does so via [AutoUnattend.xml](AutoUnattend.xml), inserted into `boot.wim` to not cause setup.exe issues under windows  
 More conveniently can be placed at the root of 11 media, along with [auto.cmd](auto.cmd) to use for upgrades  
 Should work with any 11 Release (22000.x) or Dev (22xxx.x) media - and it hides unsupported PC nags as a bonus ;)  
-_If you have already connected at OOBE, can try email: `a` or `test@test.com` password: `a` or `test` to switch to local account_  
+_If you have already connected at OOBE, can try email: `a` password: `a` to switch to local account_  
 
 If having update issues - on any windows version  
 ------------------------------------------------  
