@@ -1,21 +1,25 @@
 @(set '(=)||' <# lean and mean cmd / powershell hybrid #> @'
 
-::# get 11 via Windows Update on 'unsupported' PC, with /Product Server dynamic trick
+::# Get 11 on 'unsupported' PC via Windows Update or mounted ISO (no patching needed)
 ::# if wu download stuck at 0% use OfflineInsiderEnroll by whatever127 and abbodi1406
-::# V8: av false & fake positive? reject humanity (powershell), return to monke (cmd) 
+::# V9 rebased on cmd due to defender transgression; skips already patched media (0b)
 
-@echo off & title get 11 via Windows Update on 'unsupported' PC || AveYo 2022
+@echo off & title get 11 on 'unsupported' PC || AveYo 2022.05.02
 if /i "%~f0" neq "%ProgramData%\get11.cmd" goto setup
-set CLI=%*& set SOURCES=%SystemDrive%\$WINDOWS.~BT\Sources&;
+set CLI=%*& set SOURCES=%SystemDrive%\$WINDOWS.~BT\Sources& set MEDIA=.& set /a VER=11
 if not defined CLI (exit /b) else if not exist %SOURCES%\SetupHost.exe (exit /b)
-if not exist %SOURCES%\SetupCore.exe mklink /h %SOURCES%\SetupCore.exe %SOURCES%\SetupHost.exe 
-powershell -win 1 -nop -c ";"
+if not exist %SOURCES%\SetupCore.exe mklink /h %SOURCES%\SetupCore.exe %SOURCES%\SetupHost.exe >nul 
+for %%W in (%CLI%) do if /i %%W == /InstallFile (set "MEDIA=") else if not defined MEDIA set "MEDIA=%%~dpW"
 set /a restart_application=0x800705BB & call set CLI=%%CLI:%1 =%%&;
 set /a incorrect_parameter=0x80070057 & set SRV=%CLI:/Product Client =%&; 
-set /a launch_option_error=0xc190010a & set SRV=/Product Server /Telemetry Disable /Compat IgnoreWarning %SRV:/Product Server =%&;
-for /f %%W in ('tasklist /nh /fi "imagename eq setupprep.exe"') do if /i %%W==setupprep.exe set SRV=%CLI%&;
-%SOURCES%\SetupCore.exe %SRV% 
-if %errorlevel% == %restart_application% %SOURCES%\SetupCore.exe %SRV%
+set /a launch_option_error=0xc190010a & set SRV=%SRV:/Product Server =%&;
+powershell -win 1 -nop -c ";" 
+if %VER% == 11 for %%W in ("%MEDIA%appraiserres.dll") do if exist %%W if %%~zW == 0 set AlreadyPatched=1 & set /a VER=10
+if %VER% == 11 findstr /r "P.r.o.d.u.c.t.V.e.r.s.i.o.n...1.0.\..0.\..2.[23]" %SOURCES%\SetupHost.exe >nul 2>nul || set /a VER=10
+if %VER% == 11 if not exist "%MEDIA%EI.cfg" (echo;[Channel]>%SOURCES%\EI.cfg & echo;_Default>>%SOURCES%\EI.cfg) 2>nul
+if %VER% == 11 set CLI=/Product Server /Compat IgnoreWarning /MigrateDrivers All /Telemetry Disable %SRV%&;
+%SOURCES%\SetupCore.exe %CLI%
+if %errorlevel% == %restart_application% %SOURCES%\SetupCore.exe %CLI%
 exit /b
 
 :setup
@@ -35,22 +39,22 @@ if /i "%CLI%"=="" reg query "%IFEO%\SetupHost.exe\0" /v Debugger >nul 2>nul && g
 if /i "%~1"=="install" (goto install) else if /i "%~1"=="remove" goto remove
 
 :install
-@prompt $H & echo on
-copy /y "%~f0" "%ProgramData%\get11.cmd"
-reg add "%IFEO%\SetupHost.exe" /f /v UseFilter /d 1 /t reg_dword
-reg add "%IFEO%\SetupHost.exe\0" /f /v FilterFullPath /d "%SystemDrive%\$WINDOWS.~BT\Sources\SetupHost.exe"
-reg add "%IFEO%\SetupHost.exe\0" /f /v Debugger /d "%ProgramData%\get11.cmd"
-@echo off & echo;
-%<%:2f " Skip TPM Check on Dynamic Update v8 [INSTALLED] run again to remove "%>%
+::@prompt $H & echo on
+copy /y "%~f0" "%ProgramData%\get11.cmd" >nul 2>nul
+reg add "%IFEO%\SetupHost.exe" /f /v UseFilter /d 1 /t reg_dword >nul
+reg add "%IFEO%\SetupHost.exe\0" /f /v FilterFullPath /d "%SystemDrive%\$WINDOWS.~BT\Sources\SetupHost.exe" >nul
+reg add "%IFEO%\SetupHost.exe\0" /f /v Debugger /d "%ProgramData%\get11.cmd" >nul
+::@echo off & echo;
+%<%:f0 " Skip TPM Check on Dynamic Update V9 "%>>% & %<%:2f " INSTALLED "%>>% & %<%:f0 " run again to remove "%>%
 if /i "%CLI%"=="" timeout /t 7
 exit /b
 
 :remove
-@prompt $H & echo on
-del /f /q "%ProgramData%\get11.cmd"
-reg delete "%IFEO%\SetupHost.exe" /f 
-@echo off & echo;
-%<%:df " Skip TPM Check on Dynamic Update v8 [REMOVED] run again to install "%>%
+::@prompt $H & echo on
+del /f /q "%ProgramData%\get11.cmd" >nul 2>nul
+reg delete "%IFEO%\SetupHost.exe" /f >nul 2>nul
+::@echo off & echo;
+%<%:f0 " Skip TPM Check on Dynamic Update V9 "%>>% & %<%:df " REMOVED "%>>% & %<%:f0 " run again to install "%>%
 if /i "%CLI%"=="" timeout /t 7
 exit /b 
 
