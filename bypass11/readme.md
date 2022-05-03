@@ -53,7 +53,8 @@ More conveniently can be placed at the root of 11 media, along with [auto.cmd](a
 Should work with any 11 Release (22000.x) or Dev (22xxx.x) media - and it hides unsupported PC nags as a bonus ;)  
 _If you have already connected at OOBE, can try email: `a` password: `a` to switch to local account_  
 
-If having update issues - on any windows version  
-------------------------------------------------  
-Use [windows_update_refresh.bat](windows_update_refresh.bat)  
-_AveYo: as a bonus, it hides unsupported PC nags_  
+Manage and troubleshoot Windows Update on any windows version and edition  
+-------------------------------------------------------------------------  
+Use [windows_update_refresh.bat](https://pastebin.com/XQsgjt9p) to clear pending updates (including sneaky feature upgrades)  
+Use [windows_drivers_update_toggle.bat](https://pastebin.com/cK8y4YEX) to block driver updates even on Home editions  
+Use [windows_feature_update_toggle.bat](https://pastebin.com/EcLB14hg) to block feature upgrades on 1507 - 21H2 even on Home editions!  
