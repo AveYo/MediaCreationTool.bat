@@ -37,7 +37,7 @@ Presets
 Simple deployment  
 -----------------   
 **auto.cmd** is behind ***Auto Upgrade*** preset via GUI  
-Can run it fully unnatended by renaming script with `auto MediaCreationTool.bat`  
+Can run it fully unattended by renaming script with `auto MediaCreationTool.bat`  
 Makes it easy to upgrade keeping files and apps when the OS edition does not match the media  
 Should allow upgrade from Ultimate, PosReady, Embedded, LTSC or Enterprise Eval as well  
 
