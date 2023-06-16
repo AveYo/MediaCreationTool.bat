@@ -1,7 +1,7 @@
 @(echo off% <#%) &color 07 &title Quick 11 iso esd wim TPM toggle by AveYo - with SendTo menu entry
 set "0=%~f0" &set "1=%~f1"&set "2=%~2"& powershell -nop -c iex ([io.file]::ReadAllText($env:0)) &pause &exit/b ||#>)[1]
 
-#:: what's new in v1.2: add uninstall when run again without parameters (issue #96) 
+#:: what's new in v1.2: add when run again without parameters (issue #96) 
 $timer = $(get-date)
 
 #:: Install to SendTo menu when run from another location
