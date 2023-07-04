@@ -4,7 +4,7 @@
 ::# if WU is stuck use windows_update_refresh.bat; Beta/Dev needs OfflineInsiderEnroll
 ::# V9+ rebased on cmd due to defender transgression; skip already patched media (0b)
 
-@echo off & title get 11 on 'unsupported' PC || AveYo 2022.10.02
+@echo off & title get 11 on 'unsupported' PC || AveYo 2023.07.04
 if /i "%~f0" neq "%Public%\get11.cmd" goto setup
 set CLI=%*& set SOURCES=%SystemDrive%\$WINDOWS.~BT\Sources& set MEDIA=.& set /a VER=11
 if not defined CLI (exit /b) else if not exist %SOURCES%\SetupHost.exe (exit /b)
@@ -15,7 +15,7 @@ set /a restart_application=0x800705BB & (call set CLI=%%CLI:%1 =%%)
 set /a incorrect_parameter=0x80070057 & (set SRV=%CLI:/Product Client =%)
 set /a launch_option_error=0xc190010a & (set SRV=%SRV:/Product Server =%)
 if %VER% == 11 for %%W in ("%MEDIA%appraiserres.dll") do if exist %%W if %%~zW == 0 set AlreadyPatched=1 & set /a VER=10
-if %VER% == 11 findstr /r "P.r.o.d.u.c.t.V.e.r.s.i.o.n...1.0.\..0.\..2.[256]" %SOURCES%\SetupHost.exe >nul 2>nul || set /a VER=10
+if %VER% == 11 findstr /r "P.r.o.d.u.c.t.V.e.r.s.i.o.n...1.0.\..0.\..2.[235]" %SOURCES%\SetupHost.exe >nul 2>nul || set /a VER=10
 if %VER% == 11 if not exist "%MEDIA%EI.cfg" (echo;[Channel]>%SOURCES%\EI.cfg & echo;_Default>>%SOURCES%\EI.cfg) 2>nul
 if %VER% == 11 (set CLI=/Product Server /Compat IgnoreWarning /MigrateDrivers All /Telemetry Disable %SRV%)
 if %VER% == 11 reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate /f /v DisableWUfBSafeguards /d 1 /t reg_dword >nul
@@ -46,7 +46,7 @@ reg add "%IFEO%\SetupHost.exe" /f /v UseFilter /d 1 /t reg_dword >nul
 reg add "%IFEO%\SetupHost.exe\0" /f /v FilterFullPath /d "%SystemDrive%\$WINDOWS.~BT\Sources\SetupHost.exe" >nul
 reg add "%IFEO%\SetupHost.exe\0" /f /v Debugger /d "%Public%\get11.cmd" >nul
 echo;
-%<%:f0 " Skip TPM Check on Dynamic Update V10 "%>>% & %<%:2f " INSTALLED "%>>% & %<%:f0 " run again to remove "%>%
+%<%:f0 " Skip TPM Check on Dynamic Update V11 "%>>% & %<%:2f " INSTALLED "%>>% & %<%:f0 " run again to remove "%>%
 if /i "%CLI%"=="" timeout /t 7
 exit /b
 
@@ -54,7 +54,7 @@ exit /b
 del /f /q "%Public%\get11.cmd" "%ProgramData%\get11.cmd" >nul 2>nul
 reg delete "%IFEO%\SetupHost.exe" /f >nul 2>nul
 echo;
-%<%:f0 " Skip TPM Check on Dynamic Update V10 "%>>% & %<%:df " REMOVED "%>>% & %<%:f0 " run again to install "%>%
+%<%:f0 " Skip TPM Check on Dynamic Update V11 "%>>% & %<%:df " REMOVED "%>>% & %<%:f0 " run again to install "%>%
 if /i "%CLI%"=="" timeout /t 7
 exit /b
 
