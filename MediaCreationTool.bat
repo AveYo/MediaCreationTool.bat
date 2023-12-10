@@ -216,7 +216,7 @@ goto process ::# some gamers still find it the best despite unfixed memory alloc
 
 :choice-3
 set "VER=14393" & set "VID=1607" & set "CB=14393.0.161119-1705.rs1_refresh" & set "CT=2017/01/" & set "CC=1.0"
-set "CAB=https://wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
+set "CAB=http://web.archive.org/web/20200528095636/https://wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
 set "EXE=https://download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
 goto process ::# snappy and stable for legacy hardware (but with excruciantly slow windows update process)
 
