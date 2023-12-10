@@ -1,13 +1,20 @@
 @(echo off% <#%) &color 07 &title Quick 11 iso esd wim TPM toggle by AveYo - with SendTo menu entry
 set "0=%~f0" &set "1=%~f1"&set "2=%~2"& powershell -nop -c iex ([io.file]::ReadAllText($env:0)) &pause &exit/b ||#>)[1]
 
-#:: what's new in v1.1: fixed relative seek, should now work on all iso's 
+#:: what's new in v1.2: add uninstall when run again without parameters (issue #96) 
 $timer = $(get-date)
 
 #:: Install to SendTo menu when run from another location
-if (!$env:1) { write-host "`n No input iso / esd / wim file to patch! use 'Send to' context menu ...`n" -fore Yellow }
 $SendTo = [Environment]::GetFolderPath('ApplicationData') + '\Microsoft\Windows\SendTo'
-if (!$env:1 -and $env:0 -and $(Split-Path $env:0) -ne $SendTo) {copy $env:0 "$SendTo\Quick_11_iso_esd_wim_TPM_toggle.bat" -force}
+$Script = "$SendTo\Quick_11_iso_esd_wim_TPM_toggle.bat"
+if (!$env:1 -and $env:0 -and !(test-path $Script)) { 
+  write-host "`n No input iso / esd / wim file to patch! use 'Send to' context menu ...`n" -fore Yellow
+  copy $env:0 $Script -force
+}
+elseif (!$env:1 -and $env:0 -and (test-path $Script)) {
+  write-host "`n Removed 'Send to' entry - run again to install ...`n" -fore Magenta
+  del $Script -force
+}
 if (!$env:1) { return }
 
 #:: Can force either patch or undo via second commandline parameter: 1 to patch 0 to undo
