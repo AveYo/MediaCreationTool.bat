@@ -1,7 +1,9 @@
-Not just an Universal MediaCreationTool wrapper script with ingenious support for business editions,  
-<img src="preview.png">  
-A powerful yet simple windows 10 / 11 deployment automation tool as well!  
-*If you had no success launching the script so far, this latest version will work*  
+Not just an Universal MediaCreationTool wrapper script with ingenious support for business editions,
+<img src="preview.png">
+A powerful yet simple windows 10 / 11 deployment automation tool as well!
+*If you had no success launching the script so far, this latest version will work*
+
+**Now supports Windows 11 24H2 and 25H2 with enhanced TPM bypass!**  
 
 Presets  
 -------  
@@ -9,11 +11,11 @@ Presets
 > _- can keep files and apps on more scenarios where os and target edition does not match_  
 > _- can switch detected edition by adding EditionID to script name_  
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
-> _- auto defaults to 11, so pass version as well for 10: `auto 21H2 MediaCreationTool.bat`_  
+> _- auto defaults to 11 25H2, so pass version as well for 10: `auto 21H2 MediaCreationTool.bat`_  
 
-2 ***Auto ISO*** with detected media in current folder directly _(or C:\ESD if run from zip)_  
-> _- can override detected media by adding edition name / language / arch to script name_  
-> _- example: `21H1 Education en-US x86 iso MediaCreationTool.bat`_  
+2 ***Auto ISO*** with detected media in current folder directly _(or C:\ESD if run from zip)_
+> _- can override detected media by adding edition name / language / arch to script name_
+> _- example: `24H2 Education en-US x64 iso MediaCreationTool.bat`_  
 
 3 ***Auto USB*** with detected media in specified usb target  
 > _- for data safety, this is not fully automated - must select the usb drive manually in GUI_  
@@ -24,14 +26,18 @@ Presets
 5 ***MCT Defaults*** runs unassisted, creating media without script modification  
 > _- no added files, script passes `products.xml` to MCT and quits without touching media_  
 
-1-4 presets will modify created media in the following ways:  
-> _- write `auto.cmd` to run on demand for auto upgrade with edition switch and skip tpm_  
-> _- write `$ISO$` folder content (if it exists) at the root of the media_  
-> _if you previously used $OEM$ content, must now place it in `$ISO$\sources\$OEM$\`_  
-> _- write `sources\PID.txt` to preselect edition at media boot or within windows (if configured)_  
-> _- write `sources\EI.cfg` to prevent product key prompt on Windows 11 consumer media (11 only)_  
-> _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home (11 only)_  
-> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media (11 only)_  
+1-4 presets will modify created media in the following ways:
+> _- write `auto.cmd` to run on demand for auto upgrade with edition switch and skip tpm_
+> _- write `$ISO$` folder content (if it exists) at the root of the media_
+> _if you previously used $OEM$ content, must now place it in `$ISO$\sources\$OEM$\`_
+> _- write `sources\PID.txt` to preselect edition at media boot or within windows (if configured)_
+> _- write `sources\EI.cfg` to prevent product key prompt on Windows 11 consumer media (11 only)_
+> _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home (11 only)_
+> _- **Enhanced TPM/hardware bypass** for Windows 11 24H2/25H2 with multiple bypass layers:_
+>   - _Registry-based bypasses (LabConfig, HwReqChk, MoSetup)_
+>   - _appraiserres.dll bypass_
+>   - _winsetup.dll patching in boot.wim_
+> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media (11 only)_
 > _- can disable by adding `def` to script name for a default, untouched MCT media_  
 
 Simple deployment  
@@ -125,4 +131,15 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2022.03.18: fix regression with Auto Upgrade; removed powershell -nop arg (issue #41); enhanced 11 AutoUnattend.xml
 2022.03.20: stable - all issues ironed out; improved script ui; upgrade keeping files from Eval editions too
             last squash I promise ;)
+2025.11.22: Windows 11 24H2 and 25H2 support
+            24H2 build 26100.4349 (June 2025 refresh)
+            25H2 build 26200.7171 (November 2025 refresh)
+            Enhanced TPM/hardware bypass for 24H2/25H2 installations:
+            - Added HwReqChk registry spoofing for hardware capability checks
+            - Enhanced AutoUnattend.xml with comprehensive LabConfig bypasses
+            - Added multiple layers: BypassTPMCheck, BypassSecureBootCheck, BypassRAMCheck, BypassCPUCheck, BypassStorageCheck
+            - Added AllowUpgradesWithUnsupportedTPMorCPU for MoSetup compatibility
+            - Maintains all existing bypass mechanisms (appraiserres.dll, winsetup.dll patching)
+            - 25H2 uses 24H2 products.cab as both share the same servicing branch
+            Default version updated from 23H2 to 25H2
 ```
