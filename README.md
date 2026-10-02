@@ -1,7 +1,12 @@
-Not just an Universal MediaCreationTool wrapper script with ingenious support for business editions,  
-<img src="preview.png">  
-A powerful yet simple windows 10 / 11 deployment automation tool as well!  
-*If you had no success launching the script so far, this latest version will work*  
+Not just an Universal MediaCreationTool wrapper script with ingenious support for business editions,
+<img src="preview.png">
+A powerful yet simple windows 10 / 11 deployment automation tool as well!
+*If you had no success launching the script so far, this latest version will work*
+
+**Now supports Windows 11 24H2, 25H2 and 26H2 with enhanced TPM bypass!**  
+**2026.10: added Windows 11 26H2 (26300.9457) - new default choice**  
+**2026.07 fix: the 25H2 choice now creates true 26200 media** _(previously it silently produced 24H2 / 26100)_  
+**New `utils\` local library** - bundled cabs/exes, Microsoft-only gap-filling, self-caching; see notes below  
 
 Presets  
 -------  
@@ -9,11 +14,11 @@ Presets
 > _- can keep files and apps on more scenarios where os and target edition does not match_  
 > _- can switch detected edition by adding EditionID to script name_  
 > _- can troubleshoot upgrade failing by adding `no_update` to script name_  
-> _- auto defaults to 11, so pass version as well for 10: `auto 21H2 MediaCreationTool.bat`_  
+> _- auto defaults to 11 26H2, so pass version as well for 10: `auto 21H2 MediaCreationTool.bat`_  
 
-2 ***Auto ISO*** with detected media in current folder directly _(or C:\ESD if run from zip)_  
-> _- can override detected media by adding edition name / language / arch to script name_  
-> _- example: `21H1 Education en-US x86 iso MediaCreationTool.bat`_  
+2 ***Auto ISO*** with detected media in current folder directly _(or C:\ESD if run from zip)_
+> _- can override detected media by adding edition name / language / arch to script name_
+> _- example: `24H2 Education en-US x64 iso MediaCreationTool.bat`_  
 
 3 ***Auto USB*** with detected media in specified usb target  
 > _- for data safety, this is not fully automated - must select the usb drive manually in GUI_  
@@ -24,14 +29,18 @@ Presets
 5 ***MCT Defaults*** runs unassisted, creating media without script modification  
 > _- no added files, script passes `products.xml` to MCT and quits without touching media_  
 
-1-4 presets will modify created media in the following ways:  
-> _- write `auto.cmd` to run on demand for auto upgrade with edition switch and skip tpm_  
-> _- write `$ISO$` folder content (if it exists) at the root of the media_  
-> _if you previously used $OEM$ content, must now place it in `$ISO$\sources\$OEM$\`_  
-> _- write `sources\PID.txt` to preselect edition at media boot or within windows (if configured)_  
-> _- write `sources\EI.cfg` to prevent product key prompt on Windows 11 consumer media (11 only)_  
-> _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home (11 only)_  
-> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media (11 only)_  
+1-4 presets will modify created media in the following ways:
+> _- write `auto.cmd` to run on demand for auto upgrade with edition switch and skip tpm_
+> _- write `$ISO$` folder content (if it exists) at the root of the media_
+> _if you previously used $OEM$ content, must now place it in `$ISO$\sources\$OEM$\`_
+> _- write `sources\PID.txt` to preselect edition at media boot or within windows (if configured)_
+> _- write `sources\EI.cfg` to prevent product key prompt on Windows 11 consumer media (11 only)_
+> _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home (11 only)_
+> _- **Enhanced TPM/hardware bypass** for Windows 11 24H2/25H2 with multiple bypass layers:_
+>   - _Registry-based bypasses (LabConfig, HwReqChk, MoSetup)_
+>   - _appraiserres.dll bypass_
+>   - _winsetup.dll patching in boot.wim_
+> _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media (11 only)_
 > _- can disable by adding `def` to script name for a default, untouched MCT media_  
 
 Simple deployment  
@@ -63,6 +72,42 @@ Finally, it sets recommended setup options with least amount of issues on upgrad
 >
 > Can even add a VL / MAK / retail product key in the same way to take care of licensing differences.  
 > The script also picks up any `$ISO$` folder in the current location - for $OEM$ branding, configuration, tweaks etc.  
+
+Windows 11 26H2 media notes  
+---------------------------  
+26H2 catalog: `utils/products11_26H2.cab` = the **untouched** `products.xml` served to the current MCT  
+(Catalog v2.1, `Sha256` entries), build **26300.9457.260913-1737** (GA), all languages, x64 + ARM64,  
+every ESD link on `dl.delivery.mp.microsoft.com`.  
+> _- 26H2 uses the **newer MCT exe** (`download.microsoft.com/download/0a8b07d9-.../MediaCreationTool.exe`) which_  
+> _understands the v2.1 / Sha256 schema - the 24H2-era MCT used for 25H2 would fail with `0x80070490`_  
+> _- spot-checked: SHA-256 of en-US/es-ES Consumer x64 and en-US Business x64 match an independent listing_  
+> _- same sanity check applies: aborts if the catalog does not list 26300_  
+> _- CPU must support POPCNT (SSE4.2) - 24H2+ hard requirement, cannot be bypassed_  
+
+Windows 11 25H2 media notes  
+---------------------------  
+**Download the FULL repo package** (script + `utils\` folder) - the script has zero dependencies on this  
+repo at runtime. `utils\` is the local library: exe and catalogs are always taken from there first; anything  
+missing is downloaded from **Microsoft only** and cached back into `utils\` for the next run (both catalogs  
+and MCT exes, one file per version: `products<VID>.cab` / `MediaCreationTool<VID>.exe`). The 25H2 catalog  
+(`utils/products11_25H2.cab`, pinned) has **no Microsoft source** - it must ship with the package.  
+Catalog contents:  
+build **26200.6584** (GA), es-ES + en-US, Consumer (Home/Pro/Edu) and Business (Pro VL/Enterprise), x64.  
+> _- ESD downloads still come from **Microsoft servers** - the cab only lists official links_  
+> _- every entry is verified: sizes and hashes cross-checked between the official Download Center_  
+> _products.xml (id=108396) and the files.rg-adguard.net database (SHA-1/SHA-256 match)_  
+> _- installs GA build, Windows Update brings the latest cumulative right after_  
+
+Why a pinned repo-hosted cab (a day of forensics, condensed):  
+> _- the 24H2 `Products-Win11-24H2-6B.cab` only lists 26100 builds - using it for 25H2 silently created 24H2 media_  
+> _- the catalog fwlink (`go.microsoft.com/fwlink/?LinkId=2156292`) serves a cab frozen 2025-06-16 (origin_  
+> _Last-Modified) to most clients, with inconsistent content across CDN nodes/moments - not a reliable source_  
+> _- the Download Center 25H2 `products.xml` uses `Sha256` entries; MCT selfhost expects `Sha1` -> `0x80070490`_  
+
+As a safety net, the script **verifies the catalog lists the requested version** before building,  
+aborting with a clear error instead of silently creating media for the wrong Windows version.  
+To update the pin when Microsoft rotates builds: take the new entries from the Download Center  
+products.xml, swap Sha256 for the SHA-1 published on files.rg-adguard.net, repack with makecab.  
 
 Changelog  
 ---------  
@@ -125,4 +170,28 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2022.03.18: fix regression with Auto Upgrade; removed powershell -nop arg (issue #41); enhanced 11 AutoUnattend.xml
 2022.03.20: stable - all issues ironed out; improved script ui; upgrade keeping files from Eval editions too
             last squash I promise ;)
+2025.11.22: Windows 11 24H2 and 25H2 support
+            24H2 build 26100.4349 (June 2025 refresh)
+            25H2 build 26200.7171 (November 2025 refresh)
+            Enhanced TPM/hardware bypass for 24H2/25H2 installations:
+            - Added HwReqChk registry spoofing for hardware capability checks
+            - Enhanced AutoUnattend.xml with comprehensive LabConfig bypasses
+            - Added multiple layers: BypassTPMCheck, BypassSecureBootCheck, BypassRAMCheck, BypassCPUCheck, BypassStorageCheck
+            - Added AllowUpgradesWithUnsupportedTPMorCPU for MoSetup compatibility
+            - Maintains all existing bypass mechanisms (appraiserres.dll, winsetup.dll patching)
+            - 25H2 uses 24H2 products.cab as both share the same servicing branch
+            Default version updated from 23H2 to 25H2
+2026.07.19: fixed 25H2 media creation - pinned verified catalog + sanity check
+            25H2 choice was producing 24H2 (26100) media: the referenced 24H2 products.cab only lists 26100 builds
+            25H2 now uses a repo-hosted pinned catalog (26200.6584, Sha1 schema, MS-hosted ESD links, hashes
+            cross-verified between MS Download Center products.xml and files.rg-adguard.net)
+            rejected sources: fwlink 2156292 (frozen 2025-06-16 snapshot, inconsistent across CDN nodes) and the
+            Download Center products.xml (Sha256 schema -> MCT selfhost 0x80070490)
+            sanity check aborts with a clear error if the catalog does not list the requested version (no silent wrong media)
+            added guard clearing stale per-version cab when an XML source is defined (downloader skips existing files)
+2026.10.02: Windows 11 26H2 support - build 26300.9457 (September 2026 GA), now the default choice
+            catalog utils/products11_26H2.cab: untouched MCT products.xml (v2.1, Sha256, MS-hosted ESD links)
+            26H2 uses the newer MCT exe that accepts the v2.1/Sha256 schema (old exe -> 0x80070490)
+            fixed: choices 15+ (all Windows 11 versions) were lost after UAC self-elevation (range was < 15)
+            25H2 auto-upgrade "choose media" stall workaround also applied to 26H2
 ```
