@@ -52,7 +52,7 @@ set VERSIONS=1507,1511,1607,1703,1709,1803,1809,1903,1909,20H1,20H2,21H1,21H2,22
 set /a dV=17
 
 ::# MCT Preset choice dialog items and default-index [Select in MCT]
-set PRESETS=^&Auto Upgrade,Auto ^&ISO,Auto ^&USB,^&Select,MCT ^&Defaults
+set PRESETS=^&Auto Upgrade,Auto ^&ISO,Auto ^&USB,^&Select,MCT ^&Defaults,E^&xit
 set /a dP=4
 
 :begin
@@ -131,6 +131,7 @@ echo;
 %<%:1f "3    Auto USB    : MCT gets detected media, script assists making USB stick target "%>%
 %<%:1f "4     Select     : MCT gets selected Edition, Language, Arch onto specified target "%>%
 %<%:1f "5  MCT Defaults  : MCT runs unassisted, creating media without script modification "%>%
+%<%:1f "6      Exit      : quit the script without downloading or changing anything "%>%
 echo;
 %<%:17 "1-4 adds to media: PID.txt, EI.cfg, $ISO$ dir, auto.cmd for upgrade and tpm checks "%>%
 %<%:17 "can rename script: "%>>% & %<%:1f "def MediaCreationTool.bat"%>>% & %<%:17 " to always create unmodified MCT media "%>%
@@ -263,6 +264,9 @@ set /a MCT=%dv% & set /a PRE=%dP% & goto choice-%dV%
 :choice-0
 %<%:0c " CANCELED "%>% & timeout /t 3 >nul & exit /b
 
+:exitp
+%<%:0f " EXITED "%>% & timeout /t 1 >nul & exit /b
+
 :latest unified console appearance under 7 - 11
 @echo off& title MCT& set __COMPAT_LAYER=Installer& chcp 437 >nul& set set=& for %%s in (%*) do if /i %%s equ set (set set=1)
 if not defined set set /a BackClr=0x1 & set /a TextClr=0xf & set /a Columns=32 & set /a Lines=120 & set /a Buff=9999
@@ -305,6 +309,7 @@ if %PRE% equ 2 (set "PRESET=Auto ISO")
 if %PRE% equ 3 (set "PRESET=Auto USB")
 if %PRE% equ 4 (set "PRESET=Select"       & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
 if %PRE% equ 5 (set "PRESET=MCT Defaults" & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
+if %PRE% equ 6 goto exitp
 if %PRE% equ 5 (goto noelevate) else set set=%MCT%.%PRE%
 
 ::# self elevate if needed for the custom presets to monitor setup progress, passing arguments and last GUI choices

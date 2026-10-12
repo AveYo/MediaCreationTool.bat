@@ -3,6 +3,8 @@ Not just an Universal MediaCreationTool wrapper script with ingenious support fo
 A powerful yet simple windows 10 / 11 deployment automation tool as well!  
 *If you had no success launching the script so far, this latest version will work*  
 
+**English** · [Español](README.es.md) · [Technical details](docs/TECHNICAL.en.md) · [Detalles técnicos](docs/TECHNICAL.es.md)  
+
 Presets  
 -------  
 1 ***Auto Upgrade*** with detected media, script assists setupprep for upgrading directly  
@@ -24,6 +26,10 @@ Presets
 5 ***MCT Defaults*** runs unassisted, creating media without script modification  
 > _- no added files, script passes `products.xml` to MCT and quits without touching media_  
 
+6 ***Exit*** quits the script without downloading or changing anything  
+
+<img src="preview2.png">  
+
 1-4 presets will modify created media in the following ways:  
 > _- write `auto.cmd` to run on demand for auto upgrade with edition switch and skip tpm_  
 > _- write `$ISO$` folder content (if it exists) at the root of the media_  
@@ -33,6 +39,25 @@ Presets
 > _- write `AutoUnattend.xml` in boot.wim to enable local account on Windows 11 Home (11 only)_  
 > _- patch `winsetup.dll` in boot.wim to remove windows 11 setup checks when booting from media (11 only)_  
 > _- can disable by adding `def` to script name for a default, untouched MCT media_  
+
+Linux  
+------  
+`MediaCreationTool.sh` is the same wrapper for bash - same presets, same Microsoft-hosted sources, no third party tools:  
+
+```
+./MediaCreationTool.sh                                  # interactive menu, 6 = Exit  
+./MediaCreationTool.sh iso 22H2                         # download the iso / esd in the current folder  
+./MediaCreationTool.sh auto 11_23H2 Professional en-US  # build the upgrade kit  
+./MediaCreationTool.sh usb official11                   # download the image and write it to usb  
+./MediaCreationTool.sh --dry-run iso 1909               # resolve the link and check it is alive  
+```  
+
+> _- requires `curl`, plus `python3` and `cabextract` for the catalog, `xorriso` to inject extras into an iso, `lsblk` + `dd` for usb_  
+> _- download uses `aria2c` when available, then `curl`, then `wget` - partial downloads are resumed_  
+> _- `official11` / `official10` use the microsoft software-download api (same protocol as Fido); if microsoft refuses the request from your ip, the script falls back to the catalog esd_  
+> _- the catalog returns the exact esd microsoft publishes (sha1 verified), the official api returns the real iso (x64, bootable)_  
+> _- `def` adds no extra files, `no_update` disables dynamic update - same meaning as in the bat_  
+> _- `./MediaCreationTool.sh --help` lists every version, edition, language and argument_  
 
 Simple deployment  
 -----------------   
@@ -126,3 +151,66 @@ _We did it! We broke [the previous gist](https://git.io/MediaCreationTool.bat)_ 
 2022.03.20: stable - all issues ironed out; improved script ui; upgrade keeping files from Eval editions too
             last squash I promise ;)
 ```
+
+ATTENTION, NOTICE (October 12, 2026): microsoft will cut off starting June 19,
+2027 the access to windows update for all the computers that have windows 10
+without ESU and below (the previous block was up to windows vista-server 2008
+without R2), this logically affects the server versions (server 2008 R2 up to
+server 2019, from server 2022 onwards, the windows update closure doesn't
+affect it), this is due to the expiry of the root certificates of the update
+service that expire as of this date, if you want to take a look at the official
+link of the microsoft news, here it is (use the browser translation, it's in
+English):
+
+https://techcommunity.microsoft.com/blog/windows-itpro-blog/prepare-for-windows-update-certificate-rotation-in-2027/4562463
+
+remember that root certificates are part of internet browsing, one of the
+characteristics of the https protocol is that now everything that is transferred
+to the router is encrypted (previously it wasn't so), but for programs used to
+analyze everything that is transferred on a home network like wireshark to have
+no effect (no sensitive data is seen), the root certificates must work and be
+up to date, if they don't work, it gives a certificate error in the browser and
+the programs that connect to the internet will stop working, you have to take
+this into account when using an old windows installed on the computer (by the
+way, the windows update closure also affects virtual machines, i.e., the PCs
+booted inside a physical machine).
+
+when the expiry date of the root certificate arrives it's possible that the
+offices installed on windows without support give errors checking updates (up
+to 10 and server 2019 which are client and server respectively you can install
+the 2021-365, 7 and 8, up to office 2016), this being solved by deactivating
+the office updates (when the expiry date of said root certificates arrives).
+
+in the previous window (automatic updates were imposed starting from windows
+2000) it didn't give any kind of failure when booting the operating system,
+only when opening the microsoft update page or starting the windows update.
+(I experienced the previous update closure window).
+
+in case it's windows 10 with ESU, windows 11 24H2, LTSC servers of 2019 and
+2016 and server 2022, microsoft has put as the official method to solve the
+problem, the update, i.e., you'll have to update the second Tuesday of each
+month until the date of June 19, 2027 in which already...piano, piano (you'll
+understand what I'm telling you).
+
+in case you come across this type of computers, these are the paths you have:
+
+-  buy the ESU (windows 10) (in the case of countries of the european union, it has no cost)
+-  patch the update to access the ESU, the only patch (and recommended for windows 10) is the MAS (microsoft activation script)
+-  install an unofficial patch to update the root certificates, which is the legacy update
+-  in the case of compatible versions (it's not mandatory for now from 11 24H2, windows 10 without ESU is essential
+half-way) accept the updates to major versions of windows via update or doing an update from the windows installation
+media.
+-  keep the windows installation and do a dual boot with linux (not advisable).
+-  uninstall windows and install linux together with a windows virtual machine (there everything is allowed, from originals to modified ones)
+
+in case you choose the sensible option (the last one), remember that you must
+set up vmware or virtualbox on linux (install linux on the computer logically)
+and the virtual machine with the windows of your choice (that there you can
+indeed install old windows) in an official way until June 2027, afterwards it
+won't work and you'll only be able to install and update this type of PCs by
+unofficial methods.
+
+in case you've lost your job or the course for having told you this
+inconvenience, good luck in your job search or in the course search (which I
+hope you find), with all these clues I tell you you'll see how surely in the
+end you find the dreamed job or course.
